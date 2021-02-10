@@ -18,8 +18,6 @@ class MainActivity : AppCompatActivity() {
     private var answerArray: ArrayList<Pair<Int, String>>? = ArrayList()
     private var graph = AdjacencyList<NodeEntry>()
 
-    private val questionOne = graph.createVertex(NodeEntry(-1,"Hello! What would you like to know about me?"))
-
     private var textView: TextView? = null
     private var listView: ListView? = null
 
@@ -31,8 +29,6 @@ class MainActivity : AppCompatActivity() {
         listView = findViewById(R.id.listView)
 
         fillGraph()
-
-        currentQuestion = questionOne
 
         listView?.setOnItemClickListener { parent, view, position, id ->
             val edges = graph.edges(currentQuestion)
@@ -64,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fillGraph() {
+        val questionOne = graph.createVertex(NodeEntry(-1,"Hello! What would you like to know about me?"))
         val oneAnswerOne = graph.createVertex(NodeEntry(-1,"Hello!"))
         val oneAnswerTwo = graph.createVertex(NodeEntry(-1,"Who are you?"))
         val oneAnswerThree = graph.createVertex(NodeEntry(-1,"Why are you here?"))
@@ -81,6 +78,8 @@ class MainActivity : AppCompatActivity() {
 
         val byeQuestion = graph.createVertex(NodeEntry(-1,"Goodbye."))
         val byeReply = graph.createVertex(NodeEntry(-1,"Bye!"))
+
+        currentQuestion = questionOne
 
         graph.addDirectedEdge(questionOne, oneAnswerOne)
         graph.addDirectedEdge(questionOne, oneAnswerTwo)
