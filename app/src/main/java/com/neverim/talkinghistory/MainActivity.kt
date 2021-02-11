@@ -2,10 +2,10 @@ package com.neverim.talkinghistory
 
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.neverim.talkinghistory.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.models.AdjacencyList
 import com.neverim.talkinghistory.models.Edge
 import com.neverim.talkinghistory.models.NodeEntry
@@ -13,13 +13,14 @@ import com.neverim.talkinghistory.models.Vertex
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var arrayAdapter: ArrayAdapter<Pair<Int, String>>
+    private lateinit var textView: TextView
+    private lateinit var listView: ListView
+
+    private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex<NodeEntry>
-    private var answerArray: ArrayList<Pair<Int, String>>? = ArrayList()
+    private var edgeArray: ArrayList<Edge<NodeEntry>>? = ArrayList()
     private var graph = AdjacencyList<NodeEntry>()
 
-    private var textView: TextView? = null
-    private var listView: ListView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,15 +31,14 @@ class MainActivity : AppCompatActivity() {
 
         fillGraph()
 
-        listView?.setOnItemClickListener { parent, view, position, id ->
+        listView.setOnItemClickListener { parent, view, position, id ->
             val edges = graph.edges(currentQuestion)
-            val element: Pair<Int, String> = listView?.adapter?.getItem(position) as Pair<Int, String>
+            val element: Edge<NodeEntry> = listView.adapter?.getItem(position) as Edge<NodeEntry>
             for (edge in edges) {
-                if (edge.destination.data.entry == element.second) {
+                if (edge.destination.data.entry == element.destination.data.entry) {
                     val dstVertexEdeges = graph.edges(edge.destination)
                     for (dstEdge in dstVertexEdeges) {
-                        if (edge.source.data.entry == textView?.text) {
-                            answerArray = ArrayList()
+                        if (edge.source.data.entry == textView.text) {
                             changeQuestions(view, dstEdge)
                         }
                     }
@@ -49,14 +49,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun changeQuestions(v: View, edge: Edge<NodeEntry>) {
-        textView?.text = edge.destination.data.entry
+        textView.text = edge.destination.data.entry
         currentQuestion = edge.destination
-        for (edge in graph.edges(edge.destination)) {
-            answerArray?.add(Pair(edge.destination.index, edge.destination.data.entry))
-        }
-        arrayAdapter.clear()
-        answerArray?.let { arrayAdapter.addAll(it) }
-        arrayAdapter.notifyDataSetChanged()
+        edgeArray?.clear()
+        edgeArray?.addAll(graph.edges(currentQuestion))
+        edgeAdapter.notifyDataSetChanged()
     }
 
     private fun fillGraph() {
@@ -106,20 +103,12 @@ class MainActivity : AppCompatActivity() {
 
         graph.addDirectedEdge(oneAnswerThree, questionThree)
 
-        answerArray?.add(Pair(oneAnswerOne.data.index, oneAnswerOne.data.entry))
-        answerArray?.add(Pair(oneAnswerTwo.data.index, oneAnswerTwo.data.entry))
-        answerArray?.add(Pair(oneAnswerThree.data.index, oneAnswerThree.data.entry))
-        answerArray?.add(Pair(byeQuestion.data.index, byeQuestion.data.entry))
-
-        arrayAdapter = answerArray?.let {
-            ArrayAdapter(this,android.R.layout.simple_list_item_1,
-                it
-            )
-        }!!
+        edgeArray?.addAll(graph.edges(questionOne))
+        edgeAdapter = edgeArray?.let { EdgeArrayAdapter(this, it) }!!
 
         println(graph)
 
-        listView?.adapter = arrayAdapter
-        textView?.text = questionOne.data.entry
+        listView.adapter = edgeAdapter
+        textView.text = questionOne.data.entry
     }
 }
