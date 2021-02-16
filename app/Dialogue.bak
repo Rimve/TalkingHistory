@@ -1,0 +1,52 @@
+//        val charName = "TestyChar"
+//        val addToDb = false
+//
+//        val questionOne = graph.createVertex(NodeEntry(-1, charName, "Hello! What would you like to know about me?"), addToDb)
+//        val oneAnswerOne = graph.createVertex(NodeEntry(-1,charName, "Hello!"), addToDb)
+//        val oneAnswerTwo = graph.createVertex(NodeEntry(-1, charName, "Who are you?"), addToDb)
+//        val oneAnswerThree = graph.createVertex(NodeEntry(-1, charName, "Why are you here?"), addToDb)
+//
+//        val questionTwo = graph.createVertex(NodeEntry(-1, charName, "My name is Testy and I'm here to help you!"), addToDb)
+//        val twoAnswerOne = graph.createVertex(NodeEntry(-1, charName, "How can you help me?"), addToDb)
+//
+//        val questionThree = graph.createVertex(NodeEntry(-1, charName, "I'm seeking to help to learn about me. Would you want me to tell an interesting fact?"), addToDb)
+//        val threeAnswerOne = graph.createVertex(NodeEntry(-1, charName, "Sure!"), addToDb)
+//        val threeAnswerTwo = graph.createVertex(NodeEntry(-1, charName, "Rather not."), addToDb)
+//
+//        val questionFour = graph.createVertex(NodeEntry(-1, charName, "I was made in 2021-02-05!"), addToDb)
+//        val fourAnswerOne = graph.createVertex(NodeEntry(-1, charName, "Interesting."), addToDb)
+//        val fourAnswerTwo = graph.createVertex(NodeEntry(-1, charName, "Boring."), addToDb)
+//
+//        val questionFive = graph.createVertex(NodeEntry(-1, charName, "Maybe next time.."), addToDb)
+//
+//        val byeQuestion = graph.createVertex(NodeEntry(-1, charName, "Goodbye."), addToDb)
+//        val byeReply = graph.createVertex(NodeEntry(-1, charName, "Bye!"), addToDb)
+//
+//        currentQuestion = questionOne
+//
+//        graph.addDirectedEdge(questionOne, oneAnswerOne)
+//        graph.addDirectedEdge(questionOne, oneAnswerTwo)
+//        graph.addDirectedEdge(questionOne, oneAnswerThree)
+//        graph.addDirectedEdge(questionOne, byeQuestion)
+//
+//        graph.addDirectedEdge(byeQuestion, byeReply)
+//
+//        graph.addDirectedEdge(questionTwo, twoAnswerOne)
+//        graph.addDirectedEdge(questionTwo, byeQuestion)
+//
+//        graph.addDirectedEdge(oneAnswerTwo, questionTwo)
+//        graph.addDirectedEdge(oneAnswerTwo, byeReply)
+//
+//        graph.addDirectedEdge(twoAnswerOne, questionThree)
+//        graph.addDirectedEdge(questionThree, threeAnswerOne)
+//        graph.addDirectedEdge(questionThree, threeAnswerTwo)
+//        graph.addDirectedEdge(questionThree, byeQuestion)
+//
+//        graph.addDirectedEdge(threeAnswerOne, questionFour)
+//        graph.addDirectedEdge(questionFour, fourAnswerOne)
+//        graph.addDirectedEdge(questionFour, fourAnswerTwo)
+//        graph.addDirectedEdge(questionFour, byeQuestion)
+//
+//        graph.addDirectedEdge(threeAnswerTwo, questionFive)
+//
+//        graph.addDirectedEdge(oneAnswerThree, questionThree)

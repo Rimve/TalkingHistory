@@ -8,9 +8,8 @@ import android.widget.BaseAdapter
 import android.widget.TextView
 import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.models.Edge
-import com.neverim.talkinghistory.models.NodeEntry
 
-class EdgeArrayAdapter(private val context: Context, private val arrayList: ArrayList<Edge<NodeEntry>>) : BaseAdapter() {
+class EdgeArrayAdapter(private val context: Context, private val arrayList: ArrayList<Edge>) : BaseAdapter() {
     private lateinit var question: TextView
 
     override fun getCount(): Int {
@@ -31,13 +30,5 @@ class EdgeArrayAdapter(private val context: Context, private val arrayList: Arra
         question = cView.findViewById(R.id.edge_row_textView)
         question.text = arrayList[position].destination.data.entry
         return cView
-    }
-
-    fun clear() {
-        arrayList.clear()
-    }
-
-    fun add(arrayList: ArrayList<Edge<NodeEntry>>) {
-        arrayList.addAll(arrayList)
     }
 }

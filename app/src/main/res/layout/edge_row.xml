@@ -7,8 +7,10 @@
 
     <TextView
         android:id="@+id/edge_row_textView"
-        android:layout_width="match_parent"
-        android:layout_height="47dp"
+        android:layout_width="388dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="8dp"
+        android:textSize="10pt"
         tools:layout_editor_absoluteX="72dp"
         tools:layout_editor_absoluteY="16dp" />
 

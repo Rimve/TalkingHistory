@@ -1,10 +1,13 @@
 package com.neverim.talkinghistory
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.database.*
 import com.neverim.talkinghistory.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.models.AdjacencyList
 import com.neverim.talkinghistory.models.Edge
@@ -15,11 +18,17 @@ import com.neverim.talkinghistory.models.Vertex
 class MainActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var listView: ListView
+    private lateinit var restartBtn: Button
 
     private lateinit var edgeAdapter: EdgeArrayAdapter
-    private lateinit var currentQuestion: Vertex<NodeEntry>
-    private var edgeArray: ArrayList<Edge<NodeEntry>>? = ArrayList()
-    private var graph = AdjacencyList<NodeEntry>()
+    private lateinit var currentQuestion: Vertex
+    private lateinit var mRootRef: FirebaseDatabase
+    private lateinit var mNodesRef: DatabaseReference
+    private lateinit var mAdjacenciesRef: DatabaseReference
+
+    private var edgeArray: ArrayList<Edge>? = ArrayList()
+    private var graph = AdjacencyList()
+    private var verticies: ArrayList<Vertex> = ArrayList()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,27 +37,35 @@ class MainActivity : AppCompatActivity() {
 
         textView = findViewById(R.id.textView)
         listView = findViewById(R.id.listView)
+        restartBtn = findViewById(R.id.restart_btn)
+
+        mRootRef = FirebaseDatabase.getInstance()
+        mNodesRef = mRootRef.getReference("nodes")
+        mAdjacenciesRef = mRootRef.getReference("adjacencies")
 
         fillGraph()
 
         listView.setOnItemClickListener { parent, view, position, id ->
             val edges = graph.edges(currentQuestion)
-            val element: Edge<NodeEntry> = listView.adapter?.getItem(position) as Edge<NodeEntry>
+            val element: Edge = listView.adapter?.getItem(position) as Edge
             for (edge in edges) {
                 if (edge.destination.data.entry == element.destination.data.entry) {
-                    val dstVertexEdeges = graph.edges(edge.destination)
-                    for (dstEdge in dstVertexEdeges) {
+                    val dstVertexEdges = graph.edges(edge.destination)
+                    for (dstEdge in dstVertexEdges) {
                         if (edge.source.data.entry == textView.text) {
                             changeQuestions(view, dstEdge)
                         }
                     }
                 }
             }
-            println("Selected element: $element")
+        }
+
+        restartBtn.setOnClickListener {
+            fillGraph()
         }
     }
 
-    private fun changeQuestions(v: View, edge: Edge<NodeEntry>) {
+    private fun changeQuestions(v: View, edge: Edge) {
         textView.text = edge.destination.data.entry
         currentQuestion = edge.destination
         edgeArray?.clear()
@@ -57,58 +74,66 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fillGraph() {
-        val questionOne = graph.createVertex(NodeEntry(-1,"Hello! What would you like to know about me?"))
-        val oneAnswerOne = graph.createVertex(NodeEntry(-1,"Hello!"))
-        val oneAnswerTwo = graph.createVertex(NodeEntry(-1,"Who are you?"))
-        val oneAnswerThree = graph.createVertex(NodeEntry(-1,"Why are you here?"))
+        edgeArray?.clear()
+        graph.clear()
+        verticies.clear()
 
-        val questionTwo = graph.createVertex(NodeEntry(-1,"My name is Testy and I'm here to help you!"))
-        val twoAnswerOne = graph.createVertex(NodeEntry(-1,"How can you help me?"))
+        val adjacenciesPostListener = object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Get Post object and use the values to update the UI
+                getAdjacenciesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<ArrayList<Long>>>)
+            }
 
-        val questionThree = graph.createVertex(NodeEntry(-1,"I'm seeking to help to learn about me. Would you want me to tell an interesting fact?"))
-        val threeAnswerOne = graph.createVertex(NodeEntry(-1,"Sure!"))
-        val threeAnswerTwo = graph.createVertex(NodeEntry(-1,"Rather not."))
+            override fun onCancelled(databaseError: DatabaseError) {
+                // Getting Post failed, log a message
+                Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+            }
+        }
 
-        val questionFour = graph.createVertex(NodeEntry(-1,"I was made in 2021-02-05!"))
-        val fourAnswerOne = graph.createVertex(NodeEntry(-1,"Interesting."))
-        val fourAnswerTwo = graph.createVertex(NodeEntry(-1,"Boring."))
+        val nodesPostListener = object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Get Post object and use the values to update the UI
+                getNodesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<String>>)
+                mAdjacenciesRef.addValueEventListener(adjacenciesPostListener)
+            }
 
-        val byeQuestion = graph.createVertex(NodeEntry(-1,"Goodbye."))
-        val byeReply = graph.createVertex(NodeEntry(-1,"Bye!"))
+            override fun onCancelled(databaseError: DatabaseError) {
+                // Getting Post failed, log a message
+                Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+            }
+        }
 
-        currentQuestion = questionOne
+        mNodesRef.addValueEventListener(nodesPostListener)
+//        println(graph)
+//        graph.updateDB()
+    }
 
-        graph.addDirectedEdge(questionOne, oneAnswerOne)
-        graph.addDirectedEdge(questionOne, oneAnswerTwo)
-        graph.addDirectedEdge(questionOne, oneAnswerThree)
-        graph.addDirectedEdge(questionOne, byeQuestion)
+    private fun getNodesFromDatabase(nodes: HashMap<String, ArrayList<String>>) {
+        for (node in nodes) {
+            for (value in node.value) {
+                verticies.add(graph.createVertex(NodeEntry(node.value.indexOf(value), node.key, value), false))
+            }
+        }
+    }
 
-        graph.addDirectedEdge(byeQuestion, byeReply)
+    private fun getAdjacenciesFromDatabase(nodes: HashMap<String, ArrayList<ArrayList<Long>>>) {
+        for (node in nodes) {
+            for (i in node.value.indices) {
+                if (node.value[i] != null) {
+                    val srcVertex = verticies[i]
+                    for (dstNode in node.value[i]) {
+                        val dstVertex = verticies[dstNode.toInt()]
+                        graph.addDirectedEdge(srcVertex, dstVertex)
+                    }
+                }
+            }
+        }
 
-        graph.addDirectedEdge(questionTwo, twoAnswerOne)
-        graph.addDirectedEdge(questionTwo, byeQuestion)
-
-        graph.addDirectedEdge(oneAnswerTwo, questionTwo)
-        graph.addDirectedEdge(oneAnswerTwo, byeReply)
-
-        graph.addDirectedEdge(twoAnswerOne, questionThree)
-        graph.addDirectedEdge(questionThree, threeAnswerOne)
-        graph.addDirectedEdge(questionThree, threeAnswerTwo)
-        graph.addDirectedEdge(questionThree, byeQuestion)
-
-        graph.addDirectedEdge(threeAnswerOne, questionFour)
-        graph.addDirectedEdge(questionFour, fourAnswerOne)
-        graph.addDirectedEdge(questionFour, fourAnswerTwo)
-        graph.addDirectedEdge(questionFour, byeQuestion)
-
-        graph.addDirectedEdge(oneAnswerThree, questionThree)
-
-        edgeArray?.addAll(graph.edges(questionOne))
+        currentQuestion = verticies[0]
+        edgeArray?.addAll(graph.edges(currentQuestion))
         edgeAdapter = edgeArray?.let { EdgeArrayAdapter(this, it) }!!
 
-        println(graph)
-
         listView.adapter = edgeAdapter
-        textView.text = questionOne.data.entry
+        textView.text = currentQuestion.data.entry
     }
 }

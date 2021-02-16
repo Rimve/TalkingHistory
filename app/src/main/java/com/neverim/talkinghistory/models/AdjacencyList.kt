@@ -1,14 +1,24 @@
 package com.neverim.talkinghistory.models
 
-class AdjacencyList<T> : Graph<T> {
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 
-    private val adjacencies: HashMap<Vertex<T>, ArrayList<Edge<T>>> = HashMap()
+class AdjacencyList {
 
-    override fun createVertex(data: T): Vertex<T> {
-        if (data is NodeEntry) {
-            data.index = adjacencies.count()
+    private val adjacencies: HashMap<Vertex, ArrayList<Edge>> = HashMap()
+    private var mRootRef: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private var mNodesRef: DatabaseReference = mRootRef.getReference("nodes")
+    private var mAdjacencyRef: DatabaseReference = mRootRef.getReference("adjacencies")
+
+    fun createVertex(data: NodeEntry, addToDb: Boolean): Vertex {
+        //data.index = adjacencies.count()
+        val index = data.index!!
+        val vertex = Vertex(index, data)
+        if (addToDb) {
+            data.charName?.let {
+                mNodesRef.child(it).child(data.index.toString()).setValue(data.entry)
+            }
         }
-        val vertex = Vertex(adjacencies.count(), data)
         adjacencies[vertex] = ArrayList()
         return vertex
     }
@@ -22,16 +32,33 @@ class AdjacencyList<T> : Graph<T> {
         }
     }
 
-    override fun addDirectedEdge(source: Vertex<T>, destination: Vertex<T>) {
+    fun addDirectedEdge(source: Vertex, destination: Vertex) {
         val edge = Edge(source, destination)
         adjacencies[source]?.add(edge)
     }
 
-    override fun addUndirectedEdge(source: Vertex<T>, destination: Vertex<T>) {
+    fun addUndirectedEdge(source: Vertex, destination: Vertex) {
         addDirectedEdge(source, destination)
         addDirectedEdge(destination, source)
     }
 
-    override fun edges(source: Vertex<T>) =
-        adjacencies[source]?: arrayListOf()
+    fun edges(source: Vertex) = adjacencies[source]?: arrayListOf()
+
+    fun clear() {
+        adjacencies.clear()
+    }
+
+    fun updateDB() {
+        for (entry in adjacencies) {
+            entry.key.data.charName?.let {
+                for (value in entry.value) {
+                    mAdjacencyRef.child(it)
+                        .child(entry.key.index.toString())
+                        .child(entry.value.indexOf(value).toString())
+                        .setValue(value.destination.index)
+                }
+                //mAdjacencyRef.child(it).child(entry.key.index.toString()).setValue(entry.value)
+            }
+        }
+    }
 }
