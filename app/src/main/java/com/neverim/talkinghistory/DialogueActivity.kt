@@ -1,5 +1,6 @@
 package com.neverim.talkinghistory
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -15,10 +16,11 @@ import com.neverim.talkinghistory.models.NodeEntry
 import com.neverim.talkinghistory.models.Vertex
 
 
-class MainActivity : AppCompatActivity() {
+class DialogueActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var listView: ListView
     private lateinit var restartBtn: Button
+    private lateinit var selectorBtn: Button
 
     private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex
@@ -29,25 +31,38 @@ class MainActivity : AppCompatActivity() {
     private var edgeArray: ArrayList<Edge>? = ArrayList()
     private var graph = AdjacencyList()
     private var verticies: ArrayList<Vertex> = ArrayList()
+    private var selectedChar: String? = null
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_dialogue)
 
         textView = findViewById(R.id.textView)
         listView = findViewById(R.id.listView)
-        restartBtn = findViewById(R.id.restart_btn)
+        restartBtn = findViewById(R.id.btn_restart)
+        selectorBtn = findViewById(R.id.btn_selector)
 
+        selectedChar = intent.getStringExtra("char")
+
+        // Get firebase database root node
         mRootRef = FirebaseDatabase.getInstance()
-        mNodesRef = mRootRef.getReference("nodes")
-        mAdjacenciesRef = mRootRef.getReference("adjacencies")
+        // Get subtree of nodes
+        mNodesRef = mRootRef.getReference("nodes").child(selectedChar!!)
+        // Store a local copy of the data
+        mNodesRef.keepSynced(true)
+        // Get subtree of adjacencies
+        mAdjacenciesRef = mRootRef.getReference("adjacencies").child(selectedChar!!)
+        // Store a local copy of the data
+        mAdjacenciesRef.keepSynced(true)
 
         fillGraph()
 
         listView.setOnItemClickListener { parent, view, position, id ->
             val edges = graph.edges(currentQuestion)
             val element: Edge = listView.adapter?.getItem(position) as Edge
+            
             for (edge in edges) {
                 if (edge.destination.data.entry == element.destination.data.entry) {
                     val dstVertexEdges = graph.edges(edge.destination)
@@ -62,6 +77,11 @@ class MainActivity : AppCompatActivity() {
 
         restartBtn.setOnClickListener {
             fillGraph()
+        }
+
+        selectorBtn.setOnClickListener {
+            val selectorIntent = Intent(this@DialogueActivity, SelectorActivity::class.java)
+            startActivity(selectorIntent)
         }
     }
 
@@ -80,25 +100,21 @@ class MainActivity : AppCompatActivity() {
 
         val adjacenciesPostListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                // Get Post object and use the values to update the UI
-                getAdjacenciesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<ArrayList<Long>>>)
+                getAdjacenciesFromDatabase(dataSnapshot.value as ArrayList<ArrayList<Long>>)
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
-                // Getting Post failed, log a message
                 Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
             }
         }
 
         val nodesPostListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                // Get Post object and use the values to update the UI
-                getNodesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<String>>)
+                getNodesFromDatabase(dataSnapshot.value as ArrayList<String>)
                 mAdjacenciesRef.addValueEventListener(adjacenciesPostListener)
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
-                // Getting Post failed, log a message
                 Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
             }
         }
@@ -108,23 +124,19 @@ class MainActivity : AppCompatActivity() {
 //        graph.updateDB()
     }
 
-    private fun getNodesFromDatabase(nodes: HashMap<String, ArrayList<String>>) {
+    private fun getNodesFromDatabase(nodes: ArrayList<String>) {
         for (node in nodes) {
-            for (value in node.value) {
-                verticies.add(graph.createVertex(NodeEntry(node.value.indexOf(value), node.key, value), false))
-            }
+            verticies.add(graph.createVertex(NodeEntry(nodes.indexOf(node), selectedChar, node), false))
         }
     }
 
-    private fun getAdjacenciesFromDatabase(nodes: HashMap<String, ArrayList<ArrayList<Long>>>) {
-        for (node in nodes) {
-            for (i in node.value.indices) {
-                if (node.value[i] != null) {
-                    val srcVertex = verticies[i]
-                    for (dstNode in node.value[i]) {
-                        val dstVertex = verticies[dstNode.toInt()]
-                        graph.addDirectedEdge(srcVertex, dstVertex)
-                    }
+    private fun getAdjacenciesFromDatabase(nodes: ArrayList<ArrayList<Long>>) {
+        for (i in nodes.indices) {
+            if (nodes[i] != null) {
+                val srcVertex = verticies[i]
+                for (dstNode in nodes[i]) {
+                    val dstVertex = verticies[dstNode.toInt()]
+                    graph.addDirectedEdge(srcVertex, dstVertex)
                 }
             }
         }
