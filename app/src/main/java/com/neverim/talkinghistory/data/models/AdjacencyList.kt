@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory.models
+package com.neverim.talkinghistory.data.models
 
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase

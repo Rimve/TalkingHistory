@@ -1,9 +1,4 @@
 <resources>
     <string name="app_name">Talking History</string>
     <string name="selected_item">Selected item:</string>
-    <string-array name="Characters">
-        <item>TestyChar</item>
-        <item>HistoryMan</item>
-        <item>General Graardor</item>
-    </string-array>
 </resources>

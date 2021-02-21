@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory
+package com.neverim.talkinghistory.ui
 
 import android.app.Application
 import android.content.res.Configuration

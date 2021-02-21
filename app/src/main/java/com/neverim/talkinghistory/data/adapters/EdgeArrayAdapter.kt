@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory.adapters
+package com.neverim.talkinghistory.data.adapters
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.models.Edge
+import com.neverim.talkinghistory.data.models.Edge
 
 class EdgeArrayAdapter(private val context: Context, private val arrayList: ArrayList<Edge>) : BaseAdapter() {
     private lateinit var question: TextView
