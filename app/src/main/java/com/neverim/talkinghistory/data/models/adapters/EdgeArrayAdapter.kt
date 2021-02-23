@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory.data.adapters
+package com.neverim.talkinghistory.data.models.adapters
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -25,8 +25,7 @@ class EdgeArrayAdapter(private val context: Context, private val arrayList: Arra
     }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View? {
-        var cView = convertView
-        cView = LayoutInflater.from(context).inflate(R.layout.edge_row, parent, false)
+        val cView = LayoutInflater.from(context).inflate(R.layout.edge_row, parent, false)
         question = cView.findViewById(R.id.edge_row_textView)
         question.text = arrayList[position].destination.data.entry
         return cView

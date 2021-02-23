@@ -9,16 +9,16 @@ import com.google.firebase.database.*
 import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.data.FirebaseSource
 
+
 class SelectorActivity : AppCompatActivity() {
-
-
 
     private lateinit var spinner: Spinner
     private lateinit var selectBtn: Button
+    private lateinit var recognizerBtn: Button
     private lateinit var mNodesRef: DatabaseReference
     private lateinit var adapter: ArrayAdapter<String>
-    private var mRootRef = FirebaseSource()
 
+    private var mRootRef = FirebaseSource()
     private var charsArray: ArrayList<String> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +27,7 @@ class SelectorActivity : AppCompatActivity() {
 
         spinner = findViewById(R.id.spinner)
         selectBtn = findViewById(R.id.btn_select_char)
+        recognizerBtn = findViewById(R.id.btn_recognizer)
 
         mNodesRef = mRootRef.getNodesRef()
         mNodesRef.keepSynced(true)
@@ -52,6 +53,11 @@ class SelectorActivity : AppCompatActivity() {
             val dialogueIntent = Intent(this@SelectorActivity, DialogueActivity::class.java)
             dialogueIntent.putExtra("char", spinner.selectedItem.toString())
             startActivity(dialogueIntent)
+        }
+
+        recognizerBtn.setOnClickListener {
+            val recognizerIntent = Intent(this@SelectorActivity, RecognizerActivity::class.java)
+            startActivity(recognizerIntent)
         }
     }
 

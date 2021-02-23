@@ -6,36 +6,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Spinner
-        android:id="@+id/spinner"
-        android:layout_width="296dp"
-        android:layout_height="52dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <Button
-        android:id="@+id/btn_select_char"
+        android:id="@+id/btn_record"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select"
+        android:text="Record"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.661" />
+        app:layout_constraintVertical_bias="0.692" />
 
-    <Button
-        android:id="@+id/btn_recognizer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Recognizer"
+    <TextView
+        android:id="@+id/tv_speech"
+        android:layout_width="331dp"
+        android:layout_height="182dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.774" />
+        app:layout_constraintVertical_bias="0.182" />
 </androidx.constraintlayout.widget.ConstraintLayout>

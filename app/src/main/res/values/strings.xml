@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Talking History</string>
     <string name="selected_item">Selected item:</string>
+    <string name="ask_permission">You need to grant all of the permission to use this app features.</string>
 </resources>

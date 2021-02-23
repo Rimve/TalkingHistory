@@ -9,7 +9,7 @@ class DialogueViewModel(private val adjacenciesRepository: AdjacenciesRepository
 
     fun getAdjacencies() = adjacenciesRepository.getAdjacencies()
     fun getEdges() = adjacenciesRepository.getEdges()
-    fun fetchFromDatabase() = adjacenciesRepository.fetchFromDatabase()
+    private fun fetchFromDatabase() = adjacenciesRepository.fetchFromDatabase()
     fun createVertex(node: NodeEntry) = adjacenciesRepository.createVertex(node)
     fun addDirectedEdge(source: Vertex, destination: Vertex) = adjacenciesRepository.addDirectedEdge(source, destination)
     fun addUndirectedEdge(source: Vertex, destination: Vertex) = adjacenciesRepository.addUndirectedEdge(source, destination)

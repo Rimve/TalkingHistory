@@ -44,16 +44,4 @@
         app:layout_constraintTop_toBottomOf="@+id/listView"
         app:layout_constraintVertical_bias="0.234" />
 
-    <Button
-        android:id="@+id/btn_selector"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Selector"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_restart"
-        app:layout_constraintVertical_bias="0.246" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

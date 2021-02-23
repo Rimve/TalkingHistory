@@ -7,9 +7,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.google.firebase.database.*
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.data.adapters.EdgeArrayAdapter
+import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.Vertex
 import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
