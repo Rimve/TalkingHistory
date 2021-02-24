@@ -22,6 +22,8 @@
         android:id="@+id/tv_speech"
         android:layout_width="331dp"
         android:layout_height="182dp"
+        android:textSize="24sp"
+        android:textAlignment="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

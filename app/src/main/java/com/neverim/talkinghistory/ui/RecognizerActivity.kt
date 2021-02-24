@@ -47,7 +47,7 @@ class RecognizerActivity : AppCompatActivity() {
                 viewModel.recordAudio()
             } else {
                 viewModel.stopAudio()
-                viewModel.sampleRecognize()
+                speechTextView.text = viewModel.sampleRecognize()
             }
         }
     }
