@@ -13,8 +13,8 @@ import com.neverim.talkinghistory.data.FirebaseSource
 class SelectorActivity : AppCompatActivity() {
 
     private lateinit var spinner: Spinner
-    private lateinit var selectBtn: Button
-    private lateinit var recognizerBtn: Button
+    private lateinit var btnSelect: Button
+    private lateinit var btnRecognize: Button
     private lateinit var mNodesRef: DatabaseReference
     private lateinit var adapter: ArrayAdapter<String>
 
@@ -25,9 +25,9 @@ class SelectorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_select_char)
 
-        spinner = findViewById(R.id.spinner)
-        selectBtn = findViewById(R.id.btn_select_char)
-        recognizerBtn = findViewById(R.id.btn_recognizer)
+        spinner = findViewById(R.id.spinner_select_chars)
+        btnSelect = findViewById(R.id.btn_select_char)
+        btnRecognize = findViewById(R.id.btn_select_recognizer)
 
         mNodesRef = mRootRef.getNodesRef()
         mNodesRef.keepSynced(true)
@@ -49,13 +49,13 @@ class SelectorActivity : AppCompatActivity() {
             spinner.adapter = adapter
         }
 
-        selectBtn.setOnClickListener {
+        btnSelect.setOnClickListener {
             val dialogueIntent = Intent(this@SelectorActivity, DialogueActivity::class.java)
             dialogueIntent.putExtra("char", spinner.selectedItem.toString())
             startActivity(dialogueIntent)
         }
 
-        recognizerBtn.setOnClickListener {
+        btnRecognize.setOnClickListener {
             val recognizerIntent = Intent(this@SelectorActivity, RecognizerActivity::class.java)
             startActivity(recognizerIntent)
         }

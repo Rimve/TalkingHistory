@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/btn_record"
+        android:id="@+id/btn_recognizer_record"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Record"
@@ -19,7 +19,7 @@
         app:layout_constraintVertical_bias="0.692" />
 
     <TextView
-        android:id="@+id/tv_speech"
+        android:id="@+id/tv_recognizer_speech"
         android:layout_width="331dp"
         android:layout_height="182dp"
         android:textSize="24sp"

@@ -59,7 +59,12 @@ class AdjacenciesRepository private constructor(private val adjacenciesDao: Adja
 
     private val adjacenciesPostListener = object : ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
-            getAdjacenciesFromDatabase(dataSnapshot.value as ArrayList<ArrayList<Long>>)
+            if (dataSnapshot.value is HashMap<*, *>) {
+                getAdjacenciesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<Long>>)
+            }
+            if (dataSnapshot.value is ArrayList<*>) {
+                getAdjacenciesFromDatabase(dataSnapshot.value as ArrayList<ArrayList<Long>>)
+            }
         }
 
         override fun onCancelled(databaseError: DatabaseError) {
@@ -72,8 +77,24 @@ class AdjacenciesRepository private constructor(private val adjacenciesDao: Adja
             if (nodes[i] != null) {
                 val srcVertex = verticies[i]
                 for (dstNode in nodes[i]) {
-                    val dstVertex = verticies[dstNode.toInt()]
-                    addDirectedEdge(srcVertex, dstVertex)
+                    if (dstNode != null) {
+                        val dstVertex = verticies[dstNode.toInt()]
+                        addDirectedEdge(srcVertex, dstVertex)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun getAdjacenciesFromDatabase(nodes: HashMap<String, ArrayList<Long>>) {
+        for (i in nodes.keys) {
+            if (nodes[i] != null) {
+                val srcVertex = verticies[i.toInt()]
+                for (dstNode in nodes[i]!!) {
+                    if (dstNode != null) {
+                        val dstVertex = verticies[dstNode.toInt()]
+                        addDirectedEdge(srcVertex, dstVertex)
+                    }
                 }
             }
         }

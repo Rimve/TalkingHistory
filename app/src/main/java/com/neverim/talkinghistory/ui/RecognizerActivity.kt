@@ -14,15 +14,15 @@ import com.neverim.talkinghistory.utilities.InjectorUtils
 
 class RecognizerActivity : AppCompatActivity() {
 
-    private lateinit var recordBtn: Button
-    private lateinit var speechTextView: TextView
+    private lateinit var btnRecord: Button
+    private lateinit var tvSpeech: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recognizer)
 
-        recordBtn = findViewById(R.id.btn_record)
-        speechTextView = findViewById(R.id.tv_speech)
+        btnRecord = findViewById(R.id.btn_recognizer_record)
+        tvSpeech = findViewById(R.id.tv_recognizer_speech)
 
         Dexter.withContext(this)
             .withPermissions(
@@ -42,12 +42,12 @@ class RecognizerActivity : AppCompatActivity() {
 
         viewModel.audioSetup()
 
-        recordBtn.setOnClickListener {
+        btnRecord.setOnClickListener {
             if (!viewModel.isRecording()) {
                 viewModel.recordAudio()
             } else {
                 viewModel.stopAudio()
-                speechTextView.text = viewModel.sampleRecognize()
+                tvSpeech.text = viewModel.sampleRecognize()
             }
         }
     }

@@ -61,12 +61,6 @@ class RecognizerRepository(private val context: Context) {
     fun recordAudio() {
         Toast.makeText(context, "Recording.", Toast.LENGTH_SHORT).show()
         recorder = createAudioRecord()
-//            AudioRecord(
-//            MediaRecorder.AudioSource.MIC,
-//            RECORDER_SAMPLERATE, RECORDER_CHANNELS,
-//            RECORDER_AUDIO_ENCODING, sizeInBytes
-//        )
-
         recorder!!.startRecording()
         isRecording = true
         recordingThread = Thread({ writeAudioDataToFile() }, "AudioRecorder Thread")
@@ -151,9 +145,6 @@ class RecognizerRepository(private val context: Context) {
         }
     }
 
-    fun isRecording() = isRecording
-    fun getTranscript() = transcriptResult
-
     private fun createAudioRecord(): AudioRecord? {
         for (sampleRate in SAMPLE_RATE_CANDIDATES) {
             sizeInBytes = AudioRecord.getMinBufferSize(sampleRate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING)
@@ -188,7 +179,7 @@ class RecognizerRepository(private val context: Context) {
     fun sampleRecognize() {
         try {
             SpeechClient.create(authExplicit()).use { speechClient ->
-                val languageCode = "lt"
+                val languageCode = "lt-LT"
                 val sampleRateHertz = RECORDER_SAMPLERATE
                 val encoding: RecognitionConfig.AudioEncoding = RecognitionConfig.AudioEncoding.LINEAR16
                 val config: RecognitionConfig = RecognitionConfig.newBuilder()
@@ -228,4 +219,7 @@ class RecognizerRepository(private val context: Context) {
             println("Failed to create the client due to: $exception")
         }
     }
+
+    fun isRecording() = isRecording
+    fun getTranscript() = transcriptResult
 }

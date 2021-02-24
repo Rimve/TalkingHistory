@@ -7,7 +7,7 @@
     android:layout_height="match_parent">
 
     <Spinner
-        android:id="@+id/spinner"
+        android:id="@+id/spinner_select_chars"
         android:layout_width="296dp"
         android:layout_height="52dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -28,7 +28,7 @@
         app:layout_constraintVertical_bias="0.661" />
 
     <Button
-        android:id="@+id/btn_recognizer"
+        android:id="@+id/btn_select_recognizer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Recognizer"
