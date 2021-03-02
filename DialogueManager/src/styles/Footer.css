@@ -7,6 +7,6 @@
 .footer-relative {
     padding: 20px;
     background-color: var(--main-color);
-    border-top: 1px solid var(--accent-color);
+    border-top: 2px solid var(--accent-color);
     z-index: 2;
 }

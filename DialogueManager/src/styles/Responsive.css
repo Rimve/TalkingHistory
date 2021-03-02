@@ -153,6 +153,7 @@
             top: 60px;
             right: -100%;
             opacity: 0;
+            transition: all 1s ease;
             padding-top: 8px;
             padding-bottom: 8px;
             margin-top: 0;
