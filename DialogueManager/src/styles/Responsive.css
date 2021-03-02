@@ -1,0 +1,205 @@
+.profile {
+    position: absolute;
+    align-content: center;
+    right: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-self: center;
+    transition: all 0.3s ease;
+    margin-bottom: 0;
+    z-index: 3;
+    overflow: hidden;
+}
+
+.prof-text {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    list-style: none;
+    padding-right: 12px;
+}
+
+.prof-text a {
+    text-decoration: none;
+    left: 0;
+    color: var(--accent-color);
+    font-size: 18px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 4px 4px 4px 4px;
+    border-radius: 4px;
+}
+
+.prof-text a:hover {
+    background-color: var(--main-color);
+}
+
+.prof-text a:active {
+    color: var(--main-color);
+    background-color: var(--accent-color);
+    transform: translateY(2px);
+}
+
+.resbar {
+
+}
+
+.resbar-container {
+
+}
+
+.res-menu {
+    position: absolute;
+    right: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-self: center;
+    margin-block: 0;
+    transition: all 0.3s ease;
+}
+
+.res-item {
+    list-style: none;
+    margin-right: 8px;
+    border: 2px solid transparent;
+}
+
+.res-links {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.menu-icon {
+    display: none;
+    align-self: center;
+}
+
+@media screen and (max-width: 1000px) {
+    .profile {
+        background-color: var(--main-color);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 108px;
+        top: 60px;
+        right: -100%;
+        opacity: 0;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .profile.active {
+        position: fixed;
+        width: fit-content;
+        height: 108px;
+        right: 0;
+        top: 60px;
+        opacity: 1;
+        transition: all 0.3s ease;
+        padding-left: 12px;
+    }
+
+    .menu-icon {
+        margin-right: 16px;
+        align-self: center;
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        right: 0;
+        padding: 2px;
+    }
+
+    @media screen and (max-width: 692px) {
+
+        .menu-icon-position {
+            display: flex;
+            align-self: center;
+        }
+
+        @media screen and (max-width: 600px) {
+            .search-bar {
+                display: none;
+            }
+        }
+
+        .ResbarItems {
+            position: relative;
+        }
+
+        .prof-text {
+            padding-right: 12px;
+        }
+
+        .form-center {
+            position: absolute !important;
+            left: 40%;
+            right: 20%;
+            display: flex;
+            align-self: center;
+            align-items: center;
+            transition: all 0.5s ease;
+        }
+
+        .res-menu {
+            background-color: var(--main-color);
+            display: flex;
+            flex-direction: column;
+            width: fit-content;
+            height: fit-content;
+            position: fixed;
+            top: 60px;
+            right: -100%;
+            opacity: 0;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 0;
+            border-bottom-left-radius: 8px;
+        }
+
+        .res-menu.active {
+            margin-block: 0;
+            height: fit-content;
+            right: 0;
+            width: fit-content;
+            opacity: 1;
+            transition: all 0.5s ease;
+            padding-left: 20px;
+            z-index: 1;
+        }
+
+        .res-item {
+            display: none;
+            list-style: none;
+            margin-top: 2px;
+            margin-right: 8px;
+        }
+
+        .res-item.active {
+            display: unset;
+            list-style: none;
+            margin-top: 2px;
+            margin-right: 8px;
+        }
+
+        .res-links {
+            text-align: center;
+            padding: 2rem;
+            width: 100%;
+            display: table;
+        }
+
+        .menu-icon {
+            margin-right: 16px;
+            align-self: center;
+            display: flex;
+            justify-content: center;
+            position: absolute;
+            right: 0;
+            padding: 2px;
+        }
+    }
+}

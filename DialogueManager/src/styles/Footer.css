@@ -1,0 +1,12 @@
+.footer {
+    flex: 1;
+    bottom: 0;
+    position: relative;
+}
+
+.footer-relative {
+    padding: 20px;
+    background-color: var(--main-color);
+    border-top: 1px solid var(--accent-color);
+    z-index: 2;
+}
