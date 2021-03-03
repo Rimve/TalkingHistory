@@ -3,7 +3,13 @@ import cytoscape from 'cytoscape';
 import cxtmenu from 'cytoscape-cxtmenu';
 import '../styles/CyStyle.css';
 import {withRouter} from "react-router-dom";
-import {dbUpdateAdjacencies, dbUpdateNodes, getCharAdjRef, getCharNodeRef} from "../services/DatabaseService";
+import {
+    getTargetNodeOfIndex,
+    getNodeOfIdRef,
+    getCharAdjRef,
+    getCharNodeRef,
+    getDstNode
+} from "../services/DatabaseService";
 import "firebase/database";
 
 class GraphComponent extends React.Component{
@@ -43,8 +49,8 @@ class GraphComponent extends React.Component{
                     fillColor: 'rgba(222,4,0,0.6)',
                     content: 'Edit',
                     contentStyle: {},
-                    select: function(ele) {
-                        console.log(ele.data())
+                    select: (ele) => {
+                        console.log(ele.data());
                     },
                     enabled: true
                 },
@@ -115,7 +121,7 @@ class GraphComponent extends React.Component{
                 },
 
                 layout: {
-                    name: 'circle',
+                    name: 'breadthfirst',
                     directed: true,
                     padding: 20,
                     avoidOverlap: true,
@@ -126,52 +132,48 @@ class GraphComponent extends React.Component{
         cy.cxtmenu(defaults);
     }
 
-    getData(name) {
+    async getData(name) {
         let nodes = [];
         let edges = [];
 
-        getCharNodeRef(name).on('value', (snapshot) => {
-            let results = snapshot.val();
-            for (let index in results) {
-                const node = {
-                    "data": {
-                        id: results[index],
-                        scratch: results.indexOf(results[index])
-                    }
-                };
-                nodes.push(node);
-            }
-        });
-
-        getCharAdjRef(name).on('value', (snapshot) => {
-            let results = snapshot.val();
-            for (let index in results) {
-                let resultObj = Object.values(results[index]);
-                resultObj.map((data, x) => {
-                    if (typeof (nodes[data]) !== 'undefined') {
-                        const edge = {
-                            "data": {
-                                source: nodes[index].data.id,
-                                target: nodes[data].data.id
-                            }
-                        };
-                        edges.push(edge);
-                    }
-                })
-
-            }
-
-            this.setState({
-                edges: edges,
-                nodes: nodes,
-                update: true
+        await getCharNodeRef(name).once('value')
+            .then((snapshot) => {
+                let results = Object.entries(snapshot.val());
+                for (let index in results) {
+                    const node = {
+                        "data": {
+                            id: results[index][1],
+                            scratch: Number(index)
+                        }
+                    };
+                    nodes.push(node);
+                }
             });
-        });
-    }
 
-    getIdOfLastNode() {
-        const {nodes} = this.state;
-        return nodes[nodes.length - 1].data.scratch
+        await getCharAdjRef(name).once('value')
+            .then((snapshot) => {
+                let results = snapshot.val();
+                for (let index in results) {
+                    let resultObj = Object.values(results[index]);
+                    resultObj.map((data, x) => {
+                        if (typeof (nodes[data]) !== 'undefined') {
+                            const edge = {
+                                "data": {
+                                    source: nodes[index].data.id,
+                                    target: nodes[data].data.id
+                                }
+                            };
+                            edges.push(edge);
+                        }
+                    })
+                }
+
+                this.setState({
+                    edges: edges,
+                    nodes: nodes,
+                    update: true
+                });
+            });
     }
 
     getNodesArraySize(srcNode) {
@@ -184,7 +186,8 @@ class GraphComponent extends React.Component{
         const {edges} = this.state;
         const {name} = this.state;
 
-        let lastId = this.getIdOfLastNode() + 1;
+        let lastId = nodes[nodes.length - 1].data.scratch + 1;
+
         const node = {
             "data": {
                 id: "empty" + lastId.toString(),
@@ -212,8 +215,12 @@ class GraphComponent extends React.Component{
     }
 
     removeNode(id) {
+        const {nodes} = this.state;
+        const {name} = this.state;
+
         let nodeToDelete = '';
-        let nodes = this.state.nodes.filter(function(node) {
+
+        let filteredNodes = this.state.nodes.filter(function(node) {
             if (node.data.scratch !== id) {
                 return node;
             }
@@ -222,36 +229,71 @@ class GraphComponent extends React.Component{
             }
         });
 
-        let edges = this.state.edges.filter(function(edge) {
+        let filteredEdges = this.state.edges.filter((edge) => {
             if (edge.data.target === nodeToDelete.data.id ||
                 edge.data.source === nodeToDelete.data.id) {
-
+                if (edge.data.target === nodeToDelete.data.id) {
+                    nodes.map((node) => {
+                        if (node.data.id === edge.data.source) {
+                            console.log("called");
+                            this.removeTargetAdjFromDb(name, node.data.scratch, nodeToDelete.data.scratch);
+                        }
+                    });
+                }
             }
             else {
                 return edge;
             }
         });
 
+        this.removeNodeFromDb(name, nodeToDelete);
+        this.removeSrcAdjFromDb(name, nodeToDelete);
+
         this.setState({
-            nodes: nodes,
-            edges: edges,
+            nodes: filteredNodes,
+            edges: filteredEdges,
             update: false
         });
     }
 
+    // Adds node entry to database nodes table
     addNodeToDatabase(name, node) {
-        dbUpdateNodes(name, [node.data.scratch]).set(node.data.id);
+        getNodeOfIdRef(name, [node.data.scratch]).set(node.data.id);
     }
 
+    // Adds adjacency to database of source node to target node
     addAdjToDatabase(name, source, target) {
         let index = this.getNodesArraySize(source);
-        dbUpdateAdjacencies(name, source.scratch, index).set(target.scratch);
+        getTargetNodeOfIndex(name, source.scratch, index).set(target.scratch);
     }
 
-    componentDidMount() {
+    // Removes the source node from database nodes table
+    removeNodeFromDb(name, node) {
+        getNodeOfIdRef(name, [node.data.scratch]).remove();
+    }
+
+    // Removes whole array from database adjacencies table of the source node
+    removeSrcAdjFromDb(name, node) {
+        getDstNode(name, node.data.scratch).remove();
+    }
+
+    // Removes target node from source adjacency
+    removeTargetAdjFromDb(name, srcIndex, indexToDelete) {
+        getDstNode(name, srcIndex).once('value')
+            .then((snapshot) => {
+                let results = snapshot.val();
+                results.map((data, targetIndex) => {
+                    if (data === indexToDelete) {
+                        getTargetNodeOfIndex(name, srcIndex, targetIndex).remove();
+                    }
+                })
+            });
+    }
+
+    async componentDidMount() {
         if (typeof(this.props.location) !== 'undefined' && this.props.location != null) {
             this.setState({name: this.props.location.state.name});
-            this.getData(this.props.location.state.name);
+            await this.getData(this.props.location.state.name);
         }
         else {
             console.log("Fail");
@@ -259,8 +301,7 @@ class GraphComponent extends React.Component{
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (prevState.edges !== this.state.edges ||
-            prevState.update !== this.state.update) {
+        if (prevState.update !== this.state.update) {
             this.renderCytoscapeElement();
             this.setState({update: true});
             // console.log(this.state.nodes);

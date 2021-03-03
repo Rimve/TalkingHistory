@@ -1,5 +1,5 @@
 import React from 'react'
-import {getNodeRef} from "../services/DatabaseService";
+import {getNodesRef} from "../services/DatabaseService";
 import '../styles/CharacterSelection.css';
 import {Link, withRouter} from "react-router-dom";
 
@@ -15,7 +15,7 @@ class SelectorComponent extends React.Component{
 
     componentDidMount() {
         let names = [];
-        getNodeRef().on('value', (snapshot) => {
+        getNodesRef().on('value', (snapshot) => {
             let results = snapshot.val();
             for(let index in results){
                 const name = {
