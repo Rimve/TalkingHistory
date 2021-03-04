@@ -110,7 +110,7 @@
 }
 
 .max-height-container {
-    min-height: calc(100vh - 125px);
+    min-height: calc(100vh - 126px);
     display: flex;
     justify-content: center;
     align-items: center;

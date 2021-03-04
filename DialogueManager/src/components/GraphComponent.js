@@ -1,7 +1,7 @@
 import React from 'react';
+import EditModalComponent from "./EditModalComponent";
 import cytoscape from 'cytoscape';
 import cxtmenu from 'cytoscape-cxtmenu';
-import '../styles/CyStyle.css';
 import {withRouter} from "react-router-dom";
 import {
     getTargetNodeOfIndex,
@@ -11,6 +11,7 @@ import {
     getDstNode
 } from "../services/DatabaseService";
 import "firebase/database";
+import '../styles/CyStyle.css';
 
 class GraphComponent extends React.Component{
 
@@ -20,8 +21,10 @@ class GraphComponent extends React.Component{
         this.state = {
             nodes: [],
             edges: [],
+            nodeToEdit: null,
             name: "",
-            update: false
+            update: false,
+            showEdit: false
         };
     }
 
@@ -41,7 +44,7 @@ class GraphComponent extends React.Component{
                     content: 'Remove',
                     contentStyle: {},
                     select: (ele) => {
-                        this.removeNode(ele.data().scratch);
+                        this.removeNode(ele.data().id);
                     },
                     enabled: true
                 },
@@ -50,7 +53,8 @@ class GraphComponent extends React.Component{
                     content: 'Edit',
                     contentStyle: {},
                     select: (ele) => {
-                        console.log(ele.data());
+                        this.setState({nodeToEdit: ele.data()});
+                        this.setState({showEdit: true});
                     },
                     enabled: true
                 },
@@ -102,7 +106,7 @@ class GraphComponent extends React.Component{
                         'content': 'data(name)',
                         'text-valign': 'center',
                         'overlay-opacity': 0,
-                        'label': 'data(id)',
+                        'label': 'data(scratch)',
                         'shape': 'ellipse'
                     })
                     .selector('edge')
@@ -142,8 +146,8 @@ class GraphComponent extends React.Component{
                 for (let index in results) {
                     const node = {
                         "data": {
-                            id: results[index][1],
-                            scratch: Number(results[index][0])
+                            id: Number(results[index][0]),
+                            scratch: results[index][1]
                         }
                     };
                     nodes.push(node);
@@ -178,7 +182,7 @@ class GraphComponent extends React.Component{
 
     getNodesArraySize(srcNode) {
         const {edges} = this.state;
-        return edges.filter(edge => edge.data.source === srcNode.id).length - 1;
+        return edges.filter(edge => edge.data.source === srcNode.id).length;
     }
 
     addNode(selectedNode) {
@@ -186,16 +190,19 @@ class GraphComponent extends React.Component{
         const {edges} = this.state;
         const {name} = this.state;
 
-        let lastId = nodes[nodes.length - 1].data.scratch + 1;
-        let nodeToFind = this.getNodeByIndex(nodes, selectedNode.scratch);
+        let lastId = Number(nodes[nodes.length - 1].data.id) + 1;
+        let nodeToFind = this.getNodeByIndex(nodes, selectedNode.id);
 
         const newNode = {
             "data": {
-                id: "empty" + lastId.toString(),
-                scratch: lastId
+                id: lastId,
+                scratch: "empty" + lastId.toString()
             }
         };
         nodes.push(newNode);
+
+        this.setState({nodeToEdit: newNode.data});
+        this.setState({showEdit: true});
 
         const edge = {
             "data": {
@@ -211,7 +218,7 @@ class GraphComponent extends React.Component{
             update: false
         });
 
-        this.addNodeToDatabase(name, newNode);
+        this.addNodeToDatabase(name, newNode.data);
         this.addAdjToDatabase(name, nodes[nodes.indexOf(nodeToFind)].data, nodes[nodes.indexOf(newNode)].data);
     }
 
@@ -220,9 +227,8 @@ class GraphComponent extends React.Component{
         const {name} = this.state;
 
         let nodeToDelete = '';
-
         let filteredNodes = this.state.nodes.filter(function(node) {
-            if (node.data.scratch !== id) {
+            if (node.data.id !== id) {
                 return node;
             }
             else {
@@ -236,7 +242,7 @@ class GraphComponent extends React.Component{
                 if (edge.data.target === nodeToDelete.data.id) {
                     nodes.map((node) => {
                         if (node.data.id === edge.data.source) {
-                            this.removeTargetAdjFromDb(name, node.data.scratch, nodeToDelete.data.scratch);
+                            this.removeTargetAdjFromDb(name, node.data.id, nodeToDelete.data.id);
                         }
                     });
                 }
@@ -258,23 +264,23 @@ class GraphComponent extends React.Component{
 
     // Adds node entry to database nodes table
     addNodeToDatabase(name, node) {
-        getNodeOfIdRef(name, [node.data.scratch]).set(node.data.id);
+        getNodeOfIdRef(name, [node.id]).set(node.scratch);
     }
 
     // Adds adjacency to database of source node to target node
     addAdjToDatabase(name, source, target) {
         let index = this.getNodesArraySize(source);
-        getTargetNodeOfIndex(name, source.scratch, index).set(target.scratch);
+        getTargetNodeOfIndex(name, source.id, index).set(target.id);
     }
 
     // Removes the source node from database nodes table
     removeNodeFromDb(name, node) {
-        getNodeOfIdRef(name, [node.data.scratch]).remove();
+        getNodeOfIdRef(name, [node.data.id]).remove();
     }
 
     // Removes whole array from database adjacencies table of the source node
     removeSrcAdjFromDb(name, node) {
-        getDstNode(name, node.data.scratch).remove();
+        getDstNode(name, node.data.id).remove();
     }
 
     // Removes target node from source adjacency
@@ -283,15 +289,38 @@ class GraphComponent extends React.Component{
             .then((snapshot) => {
                 let results = snapshot.val();
                 results.map((data, targetIndex) => {
-                    if (data === indexToDelete) {
-                        getTargetNodeOfIndex(name, srcIndex, targetIndex).remove();
+                    if (Number(data) === Number(indexToDelete)) {
+                        getTargetNodeOfIndex(name, Number(srcIndex), Number(targetIndex)).remove();
                     }
                 })
             });
     }
 
     getNodeByIndex(nodes, nodeToFind) {
-        return nodes.find((node) => node.data.scratch === nodeToFind);
+        return nodes.find((node) => node.data.id === nodeToFind);
+    }
+
+    showCallback = (data) => {
+        this.setState({showEdit: data});
+    };
+
+    handleEdit = (data) => {
+        const {name} = this.state;
+
+        this.addNodeToDatabase(name, data);
+        this.setState({update: false});
+    };
+
+    modalComponent() {
+        return (
+            this.state.showEdit ?
+                <EditModalComponent
+                    showCallBack={this.showCallback}
+                    editCallBack={this.handleEdit}
+                    show={this.state.showEdit}
+                    node={this.state.nodeToEdit}
+                /> : null
+        )
     }
 
     async componentDidMount() {
@@ -308,14 +337,14 @@ class GraphComponent extends React.Component{
         if (prevState.update !== this.state.update) {
             this.renderCytoscapeElement();
             this.setState({update: true});
-            // console.log(this.state.nodes);
-            // console.log(this.state.edges);
         }
     }
 
-    render(){
+    render() {
         return (
-            <div className="graph-container" id="cy"/>
+            <div className="graph-container" id="cy">
+                {this.modalComponent()}
+            </div>
         );
     }
 }
