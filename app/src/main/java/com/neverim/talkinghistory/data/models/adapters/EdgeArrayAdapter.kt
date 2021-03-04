@@ -27,7 +27,7 @@ class EdgeArrayAdapter(private val context: Context, private val arrayList: Arra
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View? {
         val cView = LayoutInflater.from(context).inflate(R.layout.edge_row, parent, false)
         question = cView.findViewById(R.id.edge_row_textView)
-        question.text = arrayList[position].destination.data.entry
+        question.text = arrayList[position].destination.data
         return cView
     }
 }

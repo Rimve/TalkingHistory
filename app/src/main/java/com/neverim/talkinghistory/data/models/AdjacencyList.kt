@@ -10,15 +10,8 @@ class AdjacencyList {
     private var mNodesRef: DatabaseReference = mRootRef.getReference("nodes")
     private var mAdjacencyRef: DatabaseReference = mRootRef.getReference("adjacencies")
 
-    fun createVertex(data: NodeEntry, addToDb: Boolean): Vertex {
-        //data.index = adjacencies.count()
-        val index = data.index!!
+    fun createVertex(index: Int, data: String): Vertex {
         val vertex = Vertex(index, data)
-        if (addToDb) {
-            data.charName?.let {
-                mNodesRef.child(it).child(data.index.toString()).setValue(data.entry)
-            }
-        }
         adjacencies[vertex] = ArrayList()
         return vertex
     }
@@ -46,19 +39,5 @@ class AdjacencyList {
 
     fun clear() {
         adjacencies.clear()
-    }
-
-    fun updateDB() {
-        for (entry in adjacencies) {
-            entry.key.data.charName?.let {
-                for (value in entry.value) {
-                    mAdjacencyRef.child(it)
-                        .child(entry.key.index.toString())
-                        .child(entry.value.indexOf(value).toString())
-                        .setValue(value.destination.index)
-                }
-                //mAdjacencyRef.child(it).child(entry.key.index.toString()).setValue(entry.value)
-            }
-        }
     }
 }

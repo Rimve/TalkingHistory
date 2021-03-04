@@ -56,7 +56,7 @@ class DialogueActivity : AppCompatActivity() {
         dialogueViewModel.getAdjacencies().observe(this, Observer {
             if (it.size > 0) {
                 currentQuestion = dialogueViewModel.retrieveFirst()!!
-                textView.text = currentQuestion.data.entry
+                textView.text = currentQuestion.data
                 dialogueViewModel.edges(currentQuestion)
             }
         })
@@ -76,11 +76,11 @@ class DialogueActivity : AppCompatActivity() {
             val element: Edge = listView.adapter?.getItem(position) as Edge
 
             for (edge in edges) {
-                if (edge.destination.data.entry == element.destination.data.entry) {
+                if (edge.destination.data == element.destination.data) {
                     val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
                     for (dstEdge in dstVertexEdges) {
-                        if (edge.source.data.entry == textView.text) {
-                            textView.text = dstEdge.destination.data.entry
+                        if (edge.source.data == textView.text) {
+                            textView.text = dstEdge.destination.data
                             currentQuestion = dstEdge.destination
                             dialogueViewModel.edges(currentQuestion)
                         }
@@ -102,7 +102,7 @@ class DialogueActivity : AppCompatActivity() {
 
                 for (i in 0 until listView.adapter?.count!!) {
                     val item = listView.adapter?.getItem(i) as Edge
-                    val entry = item.destination.data.entry?.toLowerCase()
+                    val entry = item.destination.data.toLowerCase()
                     val lowerCaseAnswer = answer?.toLowerCase()
 
                     if (lowerCaseAnswer!!.contains(entry!!)) {
@@ -110,14 +110,17 @@ class DialogueActivity : AppCompatActivity() {
                         val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(item.destination)
                         Toast.makeText(this, "Pasirinktas atsakymas: $entry", Toast.LENGTH_SHORT).show()
                         for (dstEdge in dstVertexEdges) {
-                            if (item.source.data.entry == textView.text) {
-                                textView.text = dstEdge.destination.data.entry
+                            if (item.source.data == textView.text) {
+                                textView.text = dstEdge.destination.data
                                 currentQuestion = dstEdge.destination
                                 dialogueViewModel.edges(currentQuestion)
                                 break
                             }
                         }
                         break
+                    }
+                    else {
+                        Toast.makeText(this, "$lowerCaseAnswer", Toast.LENGTH_SHORT).show()
                     }
                 }
             }

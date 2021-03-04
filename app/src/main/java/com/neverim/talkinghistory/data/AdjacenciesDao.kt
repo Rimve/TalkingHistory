@@ -3,7 +3,6 @@ package com.neverim.talkinghistory.data
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
-import com.neverim.talkinghistory.data.models.NodeEntry
 import com.neverim.talkinghistory.data.models.Vertex
 
 class AdjacenciesDao {
@@ -24,8 +23,7 @@ class AdjacenciesDao {
         mutableQuestion.value = question
     }
 
-    fun createVertex(data: NodeEntry): Vertex {
-        val index = data.index!!
+    fun createVertex(index: Int, data: String): Vertex {
         val vertex = Vertex(index, data)
         adjacencies[vertex] = ArrayList()
         question.add(vertex)
@@ -47,8 +45,10 @@ class AdjacenciesDao {
     }
 
     fun retrieveFirst() : Vertex? {
+        var lowestIndex = 99999
         for (thing in adjacencies) {
-            if (thing.key.index == 0) {
+            if (thing.key.index < lowestIndex) {
+                lowestIndex = thing.key.index
                 first = thing.key
             }
         }
