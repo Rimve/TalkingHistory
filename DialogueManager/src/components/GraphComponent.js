@@ -143,7 +143,7 @@ class GraphComponent extends React.Component{
                     const node = {
                         "data": {
                             id: results[index][1],
-                            scratch: Number(index)
+                            scratch: Number(results[index][0])
                         }
                     };
                     nodes.push(node);
@@ -153,18 +153,18 @@ class GraphComponent extends React.Component{
         await getCharAdjRef(name).once('value')
             .then((snapshot) => {
                 let results = snapshot.val();
-                for (let index in results) {
-                    let resultObj = Object.values(results[index]);
+                for (let srcNodeIndex in results) {
+                    let resultObj = Object.values(results[srcNodeIndex]);
+                    let srcNode = this.getNodeByIndex(nodes, Number(srcNodeIndex));
                     resultObj.map((data, x) => {
-                        if (typeof (nodes[data]) !== 'undefined') {
-                            const edge = {
-                                "data": {
-                                    source: nodes[index].data.id,
-                                    target: nodes[data].data.id
-                                }
-                            };
-                            edges.push(edge);
-                        }
+                        let targetNode = this.getNodeByIndex(nodes, Number(data));
+                        const edge = {
+                            "data": {
+                                source: nodes[nodes.indexOf(srcNode)].data.id,
+                                target: nodes[nodes.indexOf(targetNode)].data.id
+                            }
+                        };
+                        edges.push(edge);
                     })
                 }
 
@@ -187,19 +187,20 @@ class GraphComponent extends React.Component{
         const {name} = this.state;
 
         let lastId = nodes[nodes.length - 1].data.scratch + 1;
+        let nodeToFind = this.getNodeByIndex(nodes, selectedNode.scratch);
 
-        const node = {
+        const newNode = {
             "data": {
                 id: "empty" + lastId.toString(),
                 scratch: lastId
             }
         };
-        nodes.push(node);
+        nodes.push(newNode);
 
         const edge = {
             "data": {
-                source: nodes[selectedNode.scratch].data.id,
-                target: nodes[lastId].data.id
+                source: nodes[nodes.indexOf(nodeToFind)].data.id,
+                target: nodes[nodes.indexOf(newNode)].data.id
             }
         };
         edges.push(edge);
@@ -210,8 +211,8 @@ class GraphComponent extends React.Component{
             update: false
         });
 
-        this.addNodeToDatabase(name, node);
-        this.addAdjToDatabase(name, nodes[selectedNode.scratch].data, nodes[lastId].data);
+        this.addNodeToDatabase(name, newNode);
+        this.addAdjToDatabase(name, nodes[nodes.indexOf(nodeToFind)].data, nodes[nodes.indexOf(newNode)].data);
     }
 
     removeNode(id) {
@@ -235,7 +236,6 @@ class GraphComponent extends React.Component{
                 if (edge.data.target === nodeToDelete.data.id) {
                     nodes.map((node) => {
                         if (node.data.id === edge.data.source) {
-                            console.log("called");
                             this.removeTargetAdjFromDb(name, node.data.scratch, nodeToDelete.data.scratch);
                         }
                     });
@@ -288,6 +288,10 @@ class GraphComponent extends React.Component{
                     }
                 })
             });
+    }
+
+    getNodeByIndex(nodes, nodeToFind) {
+        return nodes.find((node) => node.data.scratch === nodeToFind);
     }
 
     async componentDidMount() {
