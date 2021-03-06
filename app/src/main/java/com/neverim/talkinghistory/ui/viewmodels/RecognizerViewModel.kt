@@ -7,18 +7,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 
 class RecognizerViewModel(private val recognizerRepo: RecognizerRepository) : ViewModel() {
-    private fun getTranscript() = recognizerRepo.getTranscript()
+    suspend fun getTranscript() = recognizerRepo.getTranscript()
     fun audioSetup() = recognizerRepo.audioSetup()
     fun recordAudio() = recognizerRepo.recordAudio()
     fun stopAudio() = recognizerRepo.stopAudio()
     fun isRecording() = recognizerRepo.isRecording()
-    fun sampleRecognize(): String? {
-        runBlocking {
-            val job = GlobalScope.async {
-                recognizerRepo.sampleRecognize()
-            }
-            job.await()
-        }
-        return getTranscript()
-    }
 }

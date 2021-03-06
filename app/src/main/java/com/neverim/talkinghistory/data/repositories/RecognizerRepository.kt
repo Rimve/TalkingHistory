@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.*
-import android.widget.Toast
 import com.google.api.gax.core.CredentialsProvider
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.ServiceAccountCredentials
@@ -13,6 +12,7 @@ import com.google.protobuf.ByteString
 import com.karumi.dexter.Dexter
 import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.data.models.PermissionsListener
+import kotlinx.coroutines.*
 import java.io.*
 
 
@@ -26,6 +26,7 @@ class RecognizerRepository(private val context: Context) {
 
     private var recorder: AudioRecord? = null
     private var recordingThread: Thread? = null
+    private var recognizingThread: Thread? = null
     private var audioFilePath: String? = null
     private var isRecording = false
     private var transcriptResult: String? = null
@@ -59,7 +60,6 @@ class RecognizerRepository(private val context: Context) {
     }
 
     fun recordAudio() {
-        Toast.makeText(context, "Recording.", Toast.LENGTH_SHORT).show()
         recorder = createAudioRecord()
         recorder!!.startRecording()
         isRecording = true
@@ -69,13 +69,12 @@ class RecognizerRepository(private val context: Context) {
 
     fun stopAudio() {
         if (null != recorder) {
-            Toast.makeText(context, "Stopped.", Toast.LENGTH_SHORT).show()
             isRecording = false
             recorder!!.stop()
             recorder!!.release()
             recorder = null
             recordingThread = null
-            playShortAudioFileViaAudioTrack(audioFilePath)
+            //playShortAudioFileViaAudioTrack(audioFilePath)
         }
     }
 
@@ -147,7 +146,8 @@ class RecognizerRepository(private val context: Context) {
 
     private fun createAudioRecord(): AudioRecord? {
         for (sampleRate in SAMPLE_RATE_CANDIDATES) {
-            sizeInBytes = AudioRecord.getMinBufferSize(sampleRate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING)
+            sizeInBytes =
+                AudioRecord.getMinBufferSize(sampleRate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING)
             if (sizeInBytes == AudioRecord.ERROR_BAD_VALUE) {
                 continue
             }
@@ -176,50 +176,53 @@ class RecognizerRepository(private val context: Context) {
             .build()
     }
 
-    fun sampleRecognize() {
-        try {
-            SpeechClient.create(authExplicit()).use { speechClient ->
-                val languageCode = "lt-LT"
-                val sampleRateHertz = RECORDER_SAMPLERATE
-                val encoding: RecognitionConfig.AudioEncoding = RecognitionConfig.AudioEncoding.LINEAR16
-                val config: RecognitionConfig = RecognitionConfig.newBuilder()
-                    .setLanguageCode(languageCode)
-                    .setSampleRateHertz(sampleRateHertz)
-                    .setEncoding(encoding)
-                    .build()
-                val file = File(audioFilePath!!)
-                val byteData = ByteArray(file.length().toInt())
-                var iS: FileInputStream? = null
-                try {
-                    iS = FileInputStream(file)
-                    iS.read(byteData)
-                    iS.close()
-                } catch (e: FileNotFoundException) {
-                    e.printStackTrace()
-                }
-                val content = ByteString.copyFrom(byteData)
-                val audio: RecognitionAudio = RecognitionAudio.newBuilder()
-                    .setContent(content)
-                    .build()
-                val request: RecognizeRequest = RecognizeRequest.newBuilder()
-                    .setConfig(config)
-                    .setAudio(audio)
-                    .build()
-                val response: RecognizeResponse = speechClient.recognize(request)
-                for (result in response.resultsList) {
-                    // First alternative is the most probable result
-                    val alternative: SpeechRecognitionAlternative =
-                        result.alternativesList[0]
-                    println("Transcript: $alternative\n")
-                    transcriptResult = alternative.toString()
-                }
-                println("Transcribing done!")
+    suspend fun getTranscript(): String? {
+        sampleRecognize()
+        println("Finished")
+        return transcriptResult
+    }
+
+    private fun sampleRecognize() {
+        SpeechClient.create(authExplicit()).use { speechClient ->
+            val languageCode = "lt-LT"
+            val sampleRateHertz = RECORDER_SAMPLERATE
+            val encoding: RecognitionConfig.AudioEncoding =
+                RecognitionConfig.AudioEncoding.LINEAR16
+            val config: RecognitionConfig = RecognitionConfig.newBuilder()
+                .setLanguageCode(languageCode)
+                .setSampleRateHertz(sampleRateHertz)
+                .setEncoding(encoding)
+                .build()
+            val file = File(audioFilePath!!)
+            val byteData = ByteArray(file.length().toInt())
+            var iS: FileInputStream? = null
+            try {
+                iS = FileInputStream(file)
+                iS.read(byteData)
+                iS.close()
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
             }
-        } catch (exception: java.lang.Exception) {
-            println("Failed to create the client due to: $exception")
+            val content = ByteString.copyFrom(byteData)
+            val audio: RecognitionAudio = RecognitionAudio.newBuilder()
+                .setContent(content)
+                .build()
+            val request: RecognizeRequest = RecognizeRequest.newBuilder()
+                .setConfig(config)
+                .setAudio(audio)
+                .build()
+            val response: RecognizeResponse = speechClient.recognize(request)
+            for (result in response.resultsList) {
+                // First alternative is the most probable result
+                val alternative: SpeechRecognitionAlternative =
+                    result.alternativesList[0]
+                println("Transcript: $alternative\n")
+                transcriptResult = alternative.toString()
+            }
+            println("Transcribing done!")
         }
     }
 
+
     fun isRecording() = isRecording
-    fun getTranscript() = transcriptResult
 }

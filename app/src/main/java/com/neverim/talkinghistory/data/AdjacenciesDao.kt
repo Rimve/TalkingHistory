@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.Vertex
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class AdjacenciesDao {
 
@@ -59,7 +61,7 @@ class AdjacenciesDao {
     fun edges(source: Vertex): ArrayList<Edge> {
         edges.clear()
         edges.addAll(adjacencies[source]?: arrayListOf())
-        mutableEdges.value = edges
+        mutableEdges.postValue(edges)
         return edges
     }
 

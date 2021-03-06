@@ -20,7 +20,7 @@ class SelectorComponent extends React.Component{
             for(let index in results){
                 const name = {
                     "name" : index,
-                    "size" : results[index].length
+                    "size" : Object.values(results[index]).length
                 };
                 names.push(name);
             }

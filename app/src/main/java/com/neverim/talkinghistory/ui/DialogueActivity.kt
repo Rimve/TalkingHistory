@@ -16,6 +16,12 @@ import com.neverim.talkinghistory.data.models.Vertex
 import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
 import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModel
 import com.neverim.talkinghistory.utilities.InjectorUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class DialogueActivity : AppCompatActivity() {
@@ -75,9 +81,11 @@ class DialogueActivity : AppCompatActivity() {
             val edges = dialogueViewModel.edgesWithoutUiUpdate(currentQuestion)
             val element: Edge = listView.adapter?.getItem(position) as Edge
 
+
             for (edge in edges) {
                 if (edge.destination.data == element.destination.data) {
-                    val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
+                    val dstVertexEdges =
+                        dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
                     for (dstEdge in dstVertexEdges) {
                         if (edge.source.data == textView.text) {
                             textView.text = dstEdge.destination.data
@@ -95,35 +103,54 @@ class DialogueActivity : AppCompatActivity() {
 
         btnSpeak.setOnClickListener {
             if (!recognizerViewModel.isRecording()) {
+                Toast.makeText(this, "Recording.", Toast.LENGTH_SHORT).show()
                 recognizerViewModel.recordAudio()
             } else {
                 recognizerViewModel.stopAudio()
-                val answer = recognizerViewModel.sampleRecognize()
+                Toast.makeText(this, "Stopped.", Toast.LENGTH_SHORT).show()
+                CoroutineScope(Dispatchers.IO).launch {
+                    val answer = recognizerViewModel.getTranscript()
+                    withContext(Dispatchers.Default) {
+                        for (i in 0 until listView.adapter?.count!!) {
+                            val item = listView.adapter?.getItem(i) as Edge
+                            val entry = item.destination.data.toLowerCase(Locale.forLanguageTag("lt-LT"))
+                            val lowerCaseAnswer = answer?.toLowerCase(Locale.forLanguageTag("lt-LT"))
 
-                for (i in 0 until listView.adapter?.count!!) {
-                    val item = listView.adapter?.getItem(i) as Edge
-                    val entry = item.destination.data.toLowerCase()
-                    val lowerCaseAnswer = answer?.toLowerCase()
-
-                    if (lowerCaseAnswer!!.contains(entry!!)) {
-                        listView.getChildAt(i).setBackgroundColor(Color.GREEN)
-                        val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(item.destination)
-                        Toast.makeText(this, "Pasirinktas atsakymas: $entry", Toast.LENGTH_SHORT).show()
-                        for (dstEdge in dstVertexEdges) {
-                            if (item.source.data == textView.text) {
-                                textView.text = dstEdge.destination.data
-                                currentQuestion = dstEdge.destination
-                                dialogueViewModel.edges(currentQuestion)
+                            if (lowerCaseAnswer?.contains(entry) == true) {
+                                //listView.getChildAt(i).setBackgroundColor(Color.GREEN)
+                                val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(item.destination)
+                                makeToast("Pasirinktas atsakymas: $entry")
+                                for (dstEdge in dstVertexEdges) {
+                                    if (item.source.data == textView.text) {
+                                        setText(dstEdge.destination.data)
+                                        currentQuestion = dstEdge.destination
+                                        dialogueViewModel.edges(currentQuestion)
+                                        break
+                                    }
+                                }
                                 break
                             }
+                            else {
+                                if (lowerCaseAnswer != null) {
+                                    makeToast(lowerCaseAnswer)
+                                }
+                            }
                         }
-                        break
-                    }
-                    else {
-                        Toast.makeText(this, "$lowerCaseAnswer", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun setText(text: String) {
+        withContext(Dispatchers.Main) {
+            textView.text = text
+        }
+    }
+
+    private suspend fun makeToast(text: String) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(this@DialogueActivity, text, Toast.LENGTH_SHORT).show()
         }
     }
 }
