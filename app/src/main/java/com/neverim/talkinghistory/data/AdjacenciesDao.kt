@@ -47,14 +47,13 @@ class AdjacenciesDao {
     }
 
     fun retrieveFirst() : Vertex? {
-        var lowestIndex = 99999
+        var lowestIndex = Int.MAX_VALUE
         for (thing in adjacencies) {
             if (thing.key.index < lowestIndex) {
                 lowestIndex = thing.key.index
                 first = thing.key
             }
         }
-
         return first
     }
 

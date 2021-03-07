@@ -1,6 +1,5 @@
 package com.neverim.talkinghistory.ui
 
-import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ListView
@@ -10,11 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.Vertex
+import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
 import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModel
+import com.neverim.talkinghistory.utilities.HelperUtils
 import com.neverim.talkinghistory.utilities.InjectorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -81,11 +81,9 @@ class DialogueActivity : AppCompatActivity() {
             val edges = dialogueViewModel.edgesWithoutUiUpdate(currentQuestion)
             val element: Edge = listView.adapter?.getItem(position) as Edge
 
-
             for (edge in edges) {
                 if (edge.destination.data == element.destination.data) {
-                    val dstVertexEdges =
-                        dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
+                    val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
                     for (dstEdge in dstVertexEdges) {
                         if (edge.source.data == textView.text) {
                             textView.text = dstEdge.destination.data
@@ -109,33 +107,20 @@ class DialogueActivity : AppCompatActivity() {
                 recognizerViewModel.stopAudio()
                 Toast.makeText(this, "Stopped.", Toast.LENGTH_SHORT).show()
                 CoroutineScope(Dispatchers.IO).launch {
-                    val answer = recognizerViewModel.getTranscript()
-                    withContext(Dispatchers.Default) {
-                        for (i in 0 until listView.adapter?.count!!) {
-                            val item = listView.adapter?.getItem(i) as Edge
-                            val entry = item.destination.data.toLowerCase(Locale.forLanguageTag("lt-LT"))
-                            val lowerCaseAnswer = answer?.toLowerCase(Locale.forLanguageTag("lt-LT"))
-
-                            if (lowerCaseAnswer?.contains(entry) == true) {
-                                //listView.getChildAt(i).setBackgroundColor(Color.GREEN)
-                                val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(item.destination)
-                                makeToast("Pasirinktas atsakymas: $entry")
-                                for (dstEdge in dstVertexEdges) {
-                                    if (item.source.data == textView.text) {
-                                        setText(dstEdge.destination.data)
-                                        currentQuestion = dstEdge.destination
-                                        dialogueViewModel.edges(currentQuestion)
-                                        break
-                                    }
-                                }
-                                break
-                            }
-                            else {
-                                if (lowerCaseAnswer != null) {
-                                    makeToast(lowerCaseAnswer)
-                                }
+                    val answer = recognizerViewModel.getTranscript()?.toLowerCase(Locale.forLanguageTag("lt-LT"))
+                    if (answer != null) {
+                        val mostRelevantEdge = findEdgeWithLowestScore(answer)
+                        withContext(Dispatchers.Default) {
+                            val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination)
+                            makeToast("Pasirinktas atsakymas: ${mostRelevantEdge.destination.data}")
+                            if (dstVertexEdges.size > 0) {
+                                currentQuestion = changeEdges(dstVertexEdges, mostRelevantEdge)!!
+                                dialogueViewModel.edges(currentQuestion)
                             }
                         }
+                    }
+                    else {
+                        makeToast("Atpažinti nepavyko")
                     }
                 }
             }
@@ -153,4 +138,28 @@ class DialogueActivity : AppCompatActivity() {
             Toast.makeText(this@DialogueActivity, text, Toast.LENGTH_SHORT).show()
         }
     }
+
+    private suspend fun findEdgeWithLowestScore(transcript: String): Edge {
+        var lowestDst = Int.MAX_VALUE
+        lateinit var mostRelevantEdge: Edge
+        edgeArray.forEach {
+            val dst = HelperUtils.levDistance(transcript, it.destination.data.toLowerCase(Locale.forLanguageTag("lt-LT")))
+            if (lowestDst > dst) {
+                lowestDst = dst
+                mostRelevantEdge = it
+            }
+        }
+        return mostRelevantEdge
+    }
+
+    private suspend fun changeEdges(dstNodeEdges: ArrayList<Edge>, srcEdge: Edge): Vertex? {
+        for (dstEdge in dstNodeEdges) {
+            if (srcEdge.source.data == textView.text) {
+                setText(dstEdge.destination.data)
+                return dstEdge.destination
+            }
+        }
+        return null
+    }
+
 }

@@ -28,4 +28,5 @@ class TalkingHistory : Application() {
     override fun onLowMemory() {
         super.onLowMemory()
     }
+
 }
