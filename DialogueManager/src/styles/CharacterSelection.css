@@ -1,9 +1,24 @@
 .character-container {
+    display: flex;
     width: 80%;
+    height: 100%;
+    min-height: calc(100vh - 126px);
+    justify-content: center;
+    background-color: #6d727d;
+    border-left: 2px solid var(--accent-color);
+    border-right: 2px solid var(--accent-color);
+    border-left-color: var(--accent-color);
+    border-right-color: var(--accent-color);
 }
 
 .character-list {
-    max-width: 300px;
+    align-self: center;
+    align-content: center;
+    overflow-y: auto;
+    max-width: 250px;
+    max-height: calc(100vh - 200px);
+    width: 70%;
+    height: 80vh;
 }
 
 .character-item {

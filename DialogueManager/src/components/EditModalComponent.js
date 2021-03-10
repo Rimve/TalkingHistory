@@ -38,7 +38,7 @@ class EditModalComponent extends React.Component {
                         <Modal.Title>Dialogue entry</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <textarea defaultValue={this.state.nodeToEdit.scratch}
+                        <textarea placeholder={this.state.nodeToEdit.scratch}
                                   onChange={this.handleChange} className='form-control' rows='3' />
                     </Modal.Body>
                     <Modal.Footer>

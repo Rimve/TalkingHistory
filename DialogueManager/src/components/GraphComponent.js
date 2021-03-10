@@ -28,6 +28,17 @@ class GraphComponent extends React.Component{
         };
     }
 
+    showCallback = (data) => {
+        this.setState({showEdit: data});
+    };
+
+    handleEdit = (data) => {
+        const {name} = this.state;
+
+        this.addNodeToDatabase(name, data);
+        this.setState({update: false});
+    };
+
     renderCytoscapeElement() {
 
         if (!cytoscape('core', 'cxtmenu')) {
@@ -299,17 +310,6 @@ class GraphComponent extends React.Component{
     getNodeByIndex(nodes, nodeToFind) {
         return nodes.find((node) => node.data.id === nodeToFind);
     }
-
-    showCallback = (data) => {
-        this.setState({showEdit: data});
-    };
-
-    handleEdit = (data) => {
-        const {name} = this.state;
-
-        this.addNodeToDatabase(name, data);
-        this.setState({update: false});
-    };
 
     modalComponent() {
         return (
