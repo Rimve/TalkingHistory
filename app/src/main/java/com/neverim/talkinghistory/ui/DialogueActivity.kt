@@ -14,6 +14,7 @@ import com.neverim.talkinghistory.data.models.Vertex
 import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
 import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModel
+import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
 import com.neverim.talkinghistory.utilities.InjectorUtils
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,7 @@ class DialogueActivity : AppCompatActivity() {
 
     private var edgeArray = ArrayList<Edge>()
     private var selectedChar: String? = null
+    private var answer: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +75,10 @@ class DialogueActivity : AppCompatActivity() {
             edgeAdapter.notifyDataSetChanged()
         })
 
+        recognizerViewModel.getTranscript().observe(this, Observer {
+            answer = it
+        })
+
         edgeAdapter = EdgeArrayAdapter(this, edgeArray)
         listView.adapter = edgeAdapter
         edgeAdapter.notifyDataSetChanged()
@@ -100,29 +106,24 @@ class DialogueActivity : AppCompatActivity() {
         }
 
         btnSpeak.setOnClickListener {
-            if (!recognizerViewModel.isRecording()) {
-                Toast.makeText(this, "Recording.", Toast.LENGTH_SHORT).show()
-                recognizerViewModel.recordAudio()
-            } else {
-                recognizerViewModel.stopAudio()
-                Toast.makeText(this, "Stopped.", Toast.LENGTH_SHORT).show()
+            if (!recognizerViewModel.isRecognizing()) {
+                Toast.makeText(this, "Recognizing..", Toast.LENGTH_SHORT).show()
+                recognizerViewModel.startRecognition()
                 CoroutineScope(Dispatchers.IO).launch {
-                    val answer = recognizerViewModel.getTranscript()?.toLowerCase(Locale.forLanguageTag("lt-LT"))
-                    if (answer != null) {
-                        val mostRelevantEdge = findEdgeWithLowestScore(answer)
-                        withContext(Dispatchers.Default) {
+                    while (recognizerViewModel.isRecognizing()) {
+                        answer = answer?.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC))
+                        if (answer != null) {
+                            val mostRelevantEdge = findEdgeWithLowestScore(answer!!)
                             val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination)
-                            makeToast("Pasirinktas atsakymas: ${mostRelevantEdge.destination.data}")
-                            if (dstVertexEdges.size > 0) {
-                                currentQuestion = changeEdges(dstVertexEdges, mostRelevantEdge)!!
-                                dialogueViewModel.edges(currentQuestion)
-                            }
+                            changeQuestion(mostRelevantEdge, dstVertexEdges)
+                            dialogueViewModel.edges(currentQuestion)
+                            answer = null
                         }
                     }
-                    else {
-                        makeToast("Atpažinti nepavyko")
-                    }
                 }
+            } else {
+                Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show()
+                recognizerViewModel.stopRecognition()
             }
         }
     }
@@ -160,6 +161,13 @@ class DialogueActivity : AppCompatActivity() {
             }
         }
         return null
+    }
+
+    private suspend fun changeQuestion(edge: Edge, dstVertexEdges: ArrayList<Edge>) {
+        makeToast("Pasirinktas atsakymas: ${edge.destination.data}")
+        if (dstVertexEdges.size > 0) {
+            currentQuestion = changeEdges(dstVertexEdges, edge)!!
+        }
     }
 
 }

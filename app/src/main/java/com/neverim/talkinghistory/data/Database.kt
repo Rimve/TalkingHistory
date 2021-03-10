@@ -1,5 +1,7 @@
 package com.neverim.talkinghistory.data
 
+import com.neverim.talkinghistory.data.daos.AdjacenciesDao
+
 class Database private constructor() {
 
     var adjacenciesDao = AdjacenciesDao()

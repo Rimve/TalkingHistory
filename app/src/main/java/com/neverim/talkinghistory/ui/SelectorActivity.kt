@@ -14,6 +14,7 @@ class SelectorActivity : AppCompatActivity() {
 
     private lateinit var spinner: Spinner
     private lateinit var btnSelect: Button
+    private lateinit var btnTts: Button
     private lateinit var mNodesRef: DatabaseReference
     private lateinit var adapter: ArrayAdapter<String>
 
@@ -26,6 +27,7 @@ class SelectorActivity : AppCompatActivity() {
 
         spinner = findViewById(R.id.spinner_select_chars)
         btnSelect = findViewById(R.id.btn_select_char)
+        btnTts = findViewById(R.id.btn_tts)
 
         mNodesRef = mRootRef.getNodesRef()
         mNodesRef.keepSynced(true)
@@ -51,6 +53,11 @@ class SelectorActivity : AppCompatActivity() {
             val dialogueIntent = Intent(this@SelectorActivity, DialogueActivity::class.java)
             dialogueIntent.putExtra("char", spinner.selectedItem.toString())
             startActivity(dialogueIntent)
+        }
+
+        btnTts.setOnClickListener {
+            val ttsIntent = Intent(this@SelectorActivity, TTSActivity::class.java)
+            startActivity(ttsIntent)
         }
     }
 

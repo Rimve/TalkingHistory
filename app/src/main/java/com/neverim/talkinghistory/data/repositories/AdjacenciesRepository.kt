@@ -2,7 +2,7 @@ package com.neverim.talkinghistory.data.repositories
 
 import android.util.Log
 import com.google.firebase.database.*
-import com.neverim.talkinghistory.data.AdjacenciesDao
+import com.neverim.talkinghistory.data.daos.AdjacenciesDao
 import com.neverim.talkinghistory.data.FirebaseSource
 import com.neverim.talkinghistory.data.models.Vertex
 

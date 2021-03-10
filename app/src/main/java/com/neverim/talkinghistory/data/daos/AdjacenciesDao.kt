@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory.data
+package com.neverim.talkinghistory.data.daos
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

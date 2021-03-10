@@ -14,6 +14,23 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+<!--        <service-->
+<!--            android:name="com.neverim.talkinghistory.ui.TTS.TTSService"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true"-->
+<!--            android:label="Laba diena TTS Service">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.TTS_SERVICE" />-->
+
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+
+<!--            <meta-data-->
+<!--                android:name="android.speech.tts"-->
+<!--                android:resource="@xml/tts_engine" />-->
+<!--        </service>-->
+
         <activity android:name=".ui.SelectorActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,7 +38,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.DialogueActivity"/>
-        <activity android:name=".ui.RecognizerActivity"/>
+        <activity android:name=".ui.TTSActivity"/>
     </application>
 
 </manifest>
