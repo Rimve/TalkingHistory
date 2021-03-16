@@ -107,8 +107,8 @@ class GraphComponent extends React.Component{
                 style: cytoscape.stylesheet()
                     .selector('node')
                     .css({
-                        'height': 80,
-                        'width': 80,
+                        'height': 'label',
+                        'width': 'label',
                         'background-color' : '#dbd9ff',
                         'background-fit': 'cover',
                         'border-color': '#7a070c',
@@ -116,9 +116,12 @@ class GraphComponent extends React.Component{
                         'border-opacity': 0.5,
                         'content': 'data(name)',
                         'text-valign': 'center',
+                        'text-wrap': 'wrap',
+                        'text-max-width': 275,
                         'overlay-opacity': 0,
                         'label': 'data(scratch)',
-                        'shape': 'ellipse'
+                        'shape': 'circle',
+                        'padding': 25
                     })
                     .selector('edge')
                     .css({
@@ -140,7 +143,7 @@ class GraphComponent extends React.Component{
                     directed: true,
                     padding: 20,
                     avoidOverlap: true,
-                    spacingFactor: 0.75,
+                    spacingFactor: 1,
                     nodeDimensionsIncludeLabels: true
                 }
             });

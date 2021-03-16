@@ -1,5 +1,6 @@
 package com.neverim.talkinghistory.data.daos
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
@@ -8,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AdjacenciesDao {
+
+    private val LOG_TAG = this.javaClass.simpleName
 
     private val adjacencies = HashMap<Vertex, ArrayList<Edge>>()
     private val edges = ArrayList<Edge>()
@@ -20,6 +23,7 @@ class AdjacenciesDao {
     private val mutableFirst = MutableLiveData<Vertex>()
 
     init {
+        Log.i(LOG_TAG, "initializing DAO")
         mutableAdjacenciesList.value = adjacencies
         mutableEdges.value = edges
         mutableQuestion.value = question
@@ -40,6 +44,7 @@ class AdjacenciesDao {
     }
 
     fun clear() {
+        Log.i(LOG_TAG, "clearing adjacencies DAO")
         adjacencies.clear()
         edges.clear()
         question.clear()
@@ -47,6 +52,7 @@ class AdjacenciesDao {
     }
 
     fun retrieveFirst() : Vertex? {
+        Log.i(LOG_TAG, "searching for initial node")
         var lowestIndex = Int.MAX_VALUE
         for (thing in adjacencies) {
             if (thing.key.index < lowestIndex) {

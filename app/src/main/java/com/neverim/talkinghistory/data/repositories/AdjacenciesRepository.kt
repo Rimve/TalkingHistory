@@ -9,8 +9,9 @@ import com.neverim.talkinghistory.data.models.Vertex
 
 class AdjacenciesRepository private constructor(
     private val adjacenciesDao: AdjacenciesDao,
-    private val charName: String
-) {
+    private val charName: String) {
+
+    private val LOG_TAG = this.javaClass.simpleName
 
     private val databaseHelper = FirebaseSource()
     private var verticies: HashMap<String, Vertex> = HashMap()
@@ -46,54 +47,55 @@ class AdjacenciesRepository private constructor(
 
     fun edgesWithoutUi(source: Vertex) = adjacenciesDao.edgesWithoutUi(source)
 
-        private val nodesPostListener = object : ValueEventListener {
+    private val nodesPostListener = object : ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
             getNodesFromDatabase(dataSnapshot)
             mAdjacenciesRef.addValueEventListener(adjacenciesPostListener)
         }
 
         override fun onCancelled(databaseError: DatabaseError) {
-            Log.w("Adjacencies Repository", "loadPost:onCancelled", databaseError.toException())
+            Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
         }
     }
 
     private val adjacenciesPostListener = object : ValueEventListener {
         override fun onDataChange(dataSnapshot: DataSnapshot) {
-            if (dataSnapshot.value is HashMap<*, *>) {
-                getAdjacenciesFromDatabase(dataSnapshot.value as HashMap<String, ArrayList<String>>)
-            }
-            if (dataSnapshot.getValue() is ArrayList<*>) {
-                getAdjacenciesFromDatabase(dataSnapshot.value as ArrayList<ArrayList<Long>>)
-            }
+            getAdjacenciesFromDatabase(dataSnapshot)
         }
 
         override fun onCancelled(databaseError: DatabaseError) {
-            Log.w("Adjacencies Repository", "loadPost:onCancelled", databaseError.toException())
+            Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
         }
     }
 
-    private fun getAdjacenciesFromDatabase(nodes: ArrayList<ArrayList<Long>>) {
-        for (key in nodes.indices) {
-            if (nodes[key] != null) {
-                val srcVertex = verticies[key.toString()]
-                for (dstNode in nodes[key]) {
-                    if (dstNode != null) {
-                        val dstVertex = verticies[dstNode.toString()]
-                        addDirectedEdge(srcVertex!!, dstVertex!!)
+    private fun getAdjacenciesFromDatabase(dataSnapshot: DataSnapshot) {
+        Log.i(LOG_TAG, "getting adjacencies from database")
+        if (dataSnapshot.value is HashMap<*, *>) {
+            val adjacencies = dataSnapshot.value as HashMap<String, ArrayList<String?>>
+            for ((key, value) in adjacencies) {
+                if (adjacencies[key] != null) {
+                    val srcVertex = verticies[key]
+                    for (dstNode in value) {
+                        if (dstNode != null) {
+                            val dstVertex = verticies[dstNode]
+                            addDirectedEdge(srcVertex!!, dstVertex!!)
+                        }
                     }
                 }
             }
-        }
-    }
 
-    private fun getAdjacenciesFromDatabase(nodes: HashMap<String, ArrayList<String>>) {
-        for ((key, value) in nodes) {
-            if (nodes[key] != null) {
-                val srcVertex = verticies[key]
-                for (dstNode in value) {
-                    if (dstNode != null) {
-                        val dstVertex = verticies[dstNode]
-                        addDirectedEdge(srcVertex!!, dstVertex!!)
+        }
+
+        if (dataSnapshot.value is ArrayList<*>) {
+            val adjacencies = dataSnapshot.value as ArrayList<ArrayList<String?>?>
+            for (key in adjacencies.indices) {
+                if (adjacencies[key] != null) {
+                    val srcVertex = verticies[key.toString()]
+                    for (dstNode in adjacencies[key]!!) {
+                        if (dstNode != null) {
+                            val dstVertex = verticies[dstNode]
+                            addDirectedEdge(srcVertex!!, dstVertex!!)
+                        }
                     }
                 }
             }
@@ -101,11 +103,14 @@ class AdjacenciesRepository private constructor(
     }
 
     private fun getNodesFromDatabase(snapshot: DataSnapshot) {
+        Log.i(LOG_TAG, "getting vertexes from database")
         if (snapshot.value is ArrayList<*>) {
-            val nodes = snapshot.value as ArrayList<String>
-            for (node in nodes) {
-                verticies[nodes.indexOf(node).toString()] =
-                    createVertex(nodes.indexOf(node), node)
+            val nodes = snapshot.value as ArrayList<String?>
+            nodes.forEachIndexed { index, data ->
+                if (data != null) {
+                    verticies[index.toString()] =
+                        createVertex(index, data)
+                }
             }
         }
 

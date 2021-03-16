@@ -12,6 +12,8 @@ import com.neverim.talkinghistory.data.FirebaseSource
 
 class SelectorActivity : AppCompatActivity() {
 
+    private val LOG_TAG = this.javaClass.simpleName
+
     private lateinit var spinner: Spinner
     private lateinit var btnSelect: Button
     private lateinit var btnTts: Button
@@ -29,6 +31,10 @@ class SelectorActivity : AppCompatActivity() {
         btnSelect = findViewById(R.id.btn_select_char)
         btnTts = findViewById(R.id.btn_tts)
 
+        initializeUi()
+    }
+
+    private fun initializeUi() {
         mNodesRef = mRootRef.getNodesRef()
         mNodesRef.keepSynced(true)
 
@@ -38,7 +44,7 @@ class SelectorActivity : AppCompatActivity() {
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
-                Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+                Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
             }
         }
 
@@ -62,6 +68,7 @@ class SelectorActivity : AppCompatActivity() {
     }
 
     private fun getCharNamesFromDatabase(data: HashMap<String, ArrayList<String>>) {
+        Log.i(LOG_TAG, "getting all available chars from database")
         charsArray.clear()
         for (entry in data) {
             charsArray.add(entry.key)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.api.gax.rpc.ClientStream
@@ -20,6 +21,8 @@ import kotlin.system.exitProcess
 
 class RecognizerDao {
 
+    private val LOG_TAG = this.javaClass.simpleName
+
     private val sampleRateCandidates = Constants.SAMPLE_RATE_CANDIDATES
     private var recorderSampleRate: Int = Constants.RECORDER_SAMPLE_RATE
     private val recorderChannels = Constants.RECORDER_CHANNELS
@@ -27,14 +30,14 @@ class RecognizerDao {
 
     private var recorder: AudioRecord? = null
     private var recordingThread: Thread? = null
-    private var audioFilePath: String? = null
     private var isRecognizing = false
     private var sData: ByteArray? = null
-    private var sizeInBytes = AudioRecord.getMinBufferSize(
-        recorderSampleRate,
-        recorderChannels,
-        recorderAudioEncoding
-    )
+    private var sizeInBytes = 6400
+//        AudioRecord.getMinBufferSize(
+//        recorderSampleRate,
+//        recorderChannels,
+//        recorderAudioEncoding
+//    )
 
     private val transcription: String? = null
     private val mutableTranscription = MutableLiveData<String>()
@@ -52,8 +55,9 @@ class RecognizerDao {
     }
 
     fun audioSetup(context: Context): Boolean {
+        Log.i(LOG_TAG, "checking if microphone is available")
         return if (hasMicrophone(context)) {
-            audioFilePath = context.getExternalFilesDir(null)?.absolutePath + "/audio.pcm"
+            Log.i(LOG_TAG, "asking for permissions")
             Dexter.withContext(context)
                 .withPermissions(
                     Manifest.permission.RECORD_AUDIO,
@@ -63,6 +67,7 @@ class RecognizerDao {
                 .check()
             true
         } else {
+            Log.i(LOG_TAG, "microphone is not available")
             false
         }
     }
@@ -120,19 +125,19 @@ class RecognizerDao {
                         val result = response.resultsList[0]
                         val alternative = result.alternativesList[0]
                         mutableTranscription.postValue(alternative.transcript)
-                        println(alternative.transcript)
+                        Log.i(LOG_TAG, "response: ${alternative.transcript}")
                     }
 
                     override fun onComplete() {
                         for (response in responses) {
                             val result = response.resultsList[0]
                             val alternative = result.alternativesList[0]
-                            println(alternative.transcript)
+                            Log.i(LOG_TAG, "completed transcript: ${alternative.transcript}")
                         }
                     }
 
                     override fun onError(t: Throwable) {
-                        println(t)
+                        Log.e(LOG_TAG, t.toString())
                     }
                 }
                 val clientStream: ClientStream<StreamingRecognizeRequest> =
@@ -152,25 +157,18 @@ class RecognizerDao {
                     .setStreamingConfig(streamingRecognitionConfig)
                     .build()
                 clientStream.send(request)
-                if (!hasMicrophone(context)) {
-                    println("Microphone not supported")
-                    exitProcess(0)
-                }
                 recorder = createAudioRecord()
                 recorder!!.startRecording()
-                println("Start speaking")
+                Log.i(LOG_TAG, "starting recognition")
                 val startTime = System.currentTimeMillis()
                 // Audio Input Stream
-                recorder!!.read(sData!!, 0, sizeInBytes)
                 while (isRecognizing) {
                     val estimatedTime = System.currentTimeMillis() - startTime
-                    val data = ByteArray(6400)
-                    recorder!!.read(data, 0, 6400)
-                    if (estimatedTime > 60000) { // 60 seconds
-                        println("Stop speaking.")
-                        recorder!!.stop()
-                        recorder!!.release()
-                        recorder = null
+                    val data = ByteArray(sizeInBytes)
+                    recorder!!.read(data, 0, sizeInBytes)
+                    if (estimatedTime > 60000) { // stream can not exceed 60 seconds
+                        Log.i(LOG_TAG, "stopping recognition")
+                        stopRecognition()
                         break
                     }
                     request = StreamingRecognizeRequest.newBuilder()
@@ -180,7 +178,7 @@ class RecognizerDao {
                 }
             }
         } catch (e: java.lang.Exception) {
-            println(e)
+            Log.e(LOG_TAG, e.toString())
         }
         responseObserver!!.onComplete()
     }

@@ -94,7 +94,7 @@
     .profile.active {
         position: fixed;
         width: fit-content;
-        height: 108px;
+        height: fit-content;
         right: 0;
         top: 60px;
         opacity: 1;

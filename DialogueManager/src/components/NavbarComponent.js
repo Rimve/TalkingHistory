@@ -5,8 +5,10 @@ import "firebase/database";
 import '../styles/Navbar.css';
 import '../styles/App.css';
 import '../styles/Responsive.css';
+import '../styles/Loader.css';
+import {MenuData} from '../data/MenuData';
 
-function NavbarComponent() {
+function NavbarComponent({authStatus}) {
     const [button, setButton] = useState(true);
     const [click, setClick] = useState(false);
 
@@ -27,27 +29,29 @@ function NavbarComponent() {
 
     window.addEventListener('resize', showButton);
 
-    return (
-        <>
-            <div className='navbar'>
-                <div className='title-position'>
-                    <Link to='/' className='title'>
-                        <b>Dialogue Manager</b>
-                    </Link>
-                </div>
-                <div onClick={handleClick} className='menu-icon-position'>
-                    <Link to='#' className='menu-bars'>
-                        {click ? <RiIcons.RiCloseLine/> : <RiIcons.RiMenuFoldLine/>}
-                    </Link>
-                </div>
-                <ul className={click ? 'res-menu active' : 'res-menu'}>
-                    <li className={click ? 'res-item active' : 'res-item'}>
-                        <Link to='/selector' onClick={closeMobileMenu}>
-                            <button className='button text-field-height'>
-                                <b>Database</b>
-                            </button>
-                        </Link>
-                    </li>
+    const checkLoginStatus = () => {
+        if (authStatus) {
+            return (
+                <>
+                    {MenuData.map((item, index) => {
+                        return (
+                            <li key={index} className='prof-text'>
+                                <Link to={item.path} className='icon' onClick={function() {
+                                    item.onClick();
+                                    closeMobileMenu();
+                                }}>
+                                    {item.icon}
+                                    <span><b>{item.title}</b></span>
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </>
+            );
+        }
+        else {
+            return (
+                <>
                     <li className={click ? 'res-item active' : 'res-item'}>
                         <Link to='/login' onClick={closeMobileMenu}>
                             <button className='button text-field-height'>
@@ -62,6 +66,26 @@ function NavbarComponent() {
                             </button>
                         </Link>
                     </li>
+                </>
+            );
+        }
+    };
+
+    return (
+        <>
+            <div className='navbar' id='navbar'>
+                <div className='title-position'>
+                    <Link to='/' className='title'>
+                        <b>Dialogue Manager</b>
+                    </Link>
+                </div>
+                <div onClick={handleClick} className='menu-icon-position'>
+                    <Link to='#' className='menu-bars'>
+                        {click ? <RiIcons.RiCloseLine/> : <RiIcons.RiMenuFoldLine/>}
+                    </Link>
+                </div>
+                <ul className={click ? 'res-menu active' : 'res-menu'}>
+                    {checkLoginStatus()}
                 </ul>
             </div>
         </>

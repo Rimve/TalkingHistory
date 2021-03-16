@@ -1,6 +1,7 @@
 package com.neverim.talkinghistory.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
@@ -26,6 +27,8 @@ import kotlin.collections.ArrayList
 
 
 class DialogueActivity : AppCompatActivity() {
+
+    private val LOG_TAG = this.javaClass.simpleName
 
     private lateinit var textView: TextView
     private lateinit var listView: ListView
@@ -54,6 +57,7 @@ class DialogueActivity : AppCompatActivity() {
     }
 
     private fun initializeUi(charName: String) {
+        Log.i(LOG_TAG, "initializing UI")
         val adjacenciesFactory = InjectorUtils.provideAdjacenciesViewModelFactory(charName)
         val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory(this)
         val dialogueViewModel = ViewModelProvider(this, adjacenciesFactory).get(DialogueViewModel::class.java)
@@ -111,13 +115,16 @@ class DialogueActivity : AppCompatActivity() {
                 recognizerViewModel.startRecognition()
                 CoroutineScope(Dispatchers.IO).launch {
                     while (recognizerViewModel.isRecognizing()) {
-                        answer = answer?.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC))
                         if (answer != null) {
-                            val mostRelevantEdge = findEdgeWithLowestScore(answer!!)
-                            val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination)
-                            changeQuestion(mostRelevantEdge, dstVertexEdges)
-                            dialogueViewModel.edges(currentQuestion)
-                            answer = null
+                            // TODO: implement end of dialogue - atm a person can speak when there is no more dialogue
+                            val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                            if (mostRelevantEdge != null) {
+                                Log.i(LOG_TAG, "found most suitable answer: $answer")
+                                changeQuestion(mostRelevantEdge,
+                                    dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                                dialogueViewModel.edges(currentQuestion)
+                                answer = null
+                            }
                         }
                     }
                 }
@@ -140,16 +147,21 @@ class DialogueActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun findEdgeWithLowestScore(transcript: String): Edge {
+    private suspend fun findEdgeWithLowestScore(transcript: String?): Edge? {
+        Log.i(LOG_TAG, "calculating distance")
         var lowestDst = Int.MAX_VALUE
-        lateinit var mostRelevantEdge: Edge
-        edgeArray.forEach {
-            val dst = HelperUtils.levDistance(transcript, it.destination.data.toLowerCase(Locale.forLanguageTag("lt-LT")))
-            if (lowestDst > dst) {
-                lowestDst = dst
-                mostRelevantEdge = it
+        var mostRelevantEdge: Edge? = null
+        if (transcript != null) {
+            edgeArray.forEach {
+                val dst = HelperUtils.levDistance(transcript,
+                    it.destination.data.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                if (lowestDst > dst) {
+                    lowestDst = dst
+                    mostRelevantEdge = it
+                }
             }
         }
+        answer = null
         return mostRelevantEdge
     }
 

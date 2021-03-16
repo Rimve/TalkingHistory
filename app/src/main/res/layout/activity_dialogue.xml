@@ -8,8 +8,8 @@
 
     <TextView
         android:id="@+id/tv_dialogue_question"
-        android:layout_width="341dp"
-        android:layout_height="64dp"
+        android:layout_width="339dp"
+        android:layout_height="131dp"
         app:autoSizeMaxTextSize="100sp"
         app:autoSizeMinTextSize="12sp"
         app:autoSizeStepGranularity="2sp"
@@ -22,8 +22,8 @@
 
     <ListView
         android:id="@+id/lv_dialogue_choices"
-        android:layout_width="408dp"
-        android:layout_height="365dp"
+        android:layout_width="397dp"
+        android:layout_height="267dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.333"
