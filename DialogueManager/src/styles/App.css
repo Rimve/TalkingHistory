@@ -127,3 +127,14 @@
     color: #c30000;
     font-size: 18rem;
 }
+
+@media screen and (max-width: 468px) {
+
+    .body {
+        min-height: calc(100vh - 150px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+}

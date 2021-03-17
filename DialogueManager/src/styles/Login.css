@@ -1,53 +1,121 @@
-.firebaseui-container {
-    color: var(--main-color);
-    background-color: var(--accent-color);
-    border-radius: 8px;
-    min-width: 300px;
+.align-center {
+    display: flex;
+    align-self: center;
 }
 
-.mdl-button--raised.mdl-button--colored {
-    background-color: var(--main-color);
+.align-start {
+    display: flex;
+    margin-left: 16px;
+    margin-top: 8px;
+    margin-bottom: -8px;
+    align-self: flex-start;
+}
+
+.align-warning {
+    display: flex;
+    margin-left: 16px;
+    margin-top: -8px;
+    align-self: flex-start;
+}
+
+.background {
+    background-image: url("https://image.freepik.com/free-photo/spare-parts-car_1170-1344.jpg");
+}
+
+.icon-profile{
+    margin: 12px;
     color: var(--accent-color);
-    border: 2px solid transparent;
+    font-size: 6rem;
+}
+
+.fill-screen {
+    min-height: calc(100vh - 117px);
+}
+
+.div-login {
     border-radius: 8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-.mdl-button--raised.mdl-button--colored:hover {
+.margin-top {
+    margin-top: 10%;
+    margin-bottom: 10%;
+}
+
+.form-login {
+    width: 300px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: var(--main-color);
+    border: 1px solid var(--accent-color);
+}
+
+.button-login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     background-color: var(--accent-color);
     color: var(--main-color);
-    border: 2px solid var(--main-color);
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    transition-duration: 0.1s;
+    height: 40px;
+    width: 30%;
+    min-width: fit-content;
+    margin-bottom: 8px;
 }
 
-.mdl-button--raised.mdl-button--colored:active {
-    background-color: var(--accent-color);
-    color: var(--main-color);
-    border: 2px solid var(--main-color);
-}
-
-.input.firebaseui-input {
-    color: red;
-}
-
-.mdl-textfield__label {
-    color: var(--main-color);
-}
-
-.firebaseui-textfield.mdl-textfield .firebaseui-label::after {
+.button-login:hover {
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
     background-color: var(--main-color);
 }
 
-.mdl-textfield--floating-label.is-focused .mdl-textfield__label {
+.button-login:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.button-login:active {
     color: var(--main-color);
+    background-color: var(--accent-color);
+    transform: translateY(2px);
 }
 
-.firebaseui-textfield.mdl-textfield .firebaseui-label::after {
-    color: var(--main-color)
+.text-field-login {
+    margin: 8px;
+    height: 40px;
+    width: 90% !important;
 }
 
-.firebaseui-link {
-    color: var(--main-color)
-}
+@media screen and (max-width: 550px) {
+    .icon-profile{
+        margin: 12px;
+        color: var(--accent-color);
+        font-size: 4rem;
+    }
 
-.firebaseui-link:hover {
-    color: var(--select-color)
+    .form-login {
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: var(--main-color);
+    }
+
+    .div-login {
+        border-radius: 8px;
+        display: flex;
+        align-self: center;
+        margin-top: 33%;
+        max-width: 800px;
+    }
 }

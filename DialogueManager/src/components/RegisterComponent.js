@@ -127,7 +127,7 @@ export default class RegisterComponent extends Component {
                         id="passwordRpt"/>
                     <div className="text-danger align-warning">{this.state.errors.passwordRpt}</div>
 
-                    <button className='button-register align-center'>
+                    <button className='button-register container-shadow align-center'>
                         <b>Register</b>
                     </button>
                 </Form>
