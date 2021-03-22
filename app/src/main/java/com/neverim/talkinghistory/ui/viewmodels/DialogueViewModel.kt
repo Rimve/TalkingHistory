@@ -1,13 +1,18 @@
 package com.neverim.talkinghistory.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
-import com.neverim.talkinghistory.data.repositories.AdjacenciesRepository
+import com.neverim.talkinghistory.data.repositories.CharacterRepository
+import com.neverim.talkinghistory.data.repositories.StorageRepository
 
-class DialogueViewModel(private val adjacenciesRepository: AdjacenciesRepository) : ViewModel() {
+class DialogueViewModel(private val adjacenciesRepository: CharacterRepository, private val storageRepository: StorageRepository) : ViewModel() {
+
+    // Adjacenies methods
 
     fun getAdjacencies() = adjacenciesRepository.getAdjacencies()
     fun getEdges() = adjacenciesRepository.getEdges()
+    fun getFileList() = adjacenciesRepository.getFiles()
     private fun fetchFromDatabase() = adjacenciesRepository.fetchFromDatabase()
     fun createVertex(index: Int, data: String) = adjacenciesRepository.createVertex(index, data)
     fun addDirectedEdge(source: Vertex, destination: Vertex) = adjacenciesRepository.addDirectedEdge(source, destination)
@@ -22,5 +27,12 @@ class DialogueViewModel(private val adjacenciesRepository: AdjacenciesRepository
     init {
         fetchFromDatabase()
     }
+
+    // Storage methods
+
+    fun getAudio() = storageRepository.getAudio()
+    fun getImage() = storageRepository.getImage()
+    fun fetchAudio(fileNode: FileLoc) = storageRepository.fetchAudioFile(fileNode)
+    fun fetchImage(fileName: String) = storageRepository.fetchImageFile(fileName)
 
 }

@@ -1,5 +1,6 @@
 package com.neverim.talkinghistory.ui
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -10,7 +11,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.neverim.talkinghistory.R
+import com.neverim.talkinghistory.data.StorageSource
 import com.neverim.talkinghistory.data.models.Edge
+import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
 import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
@@ -22,7 +25,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.*
+import javax.net.ssl.*
 import kotlin.collections.ArrayList
 
 
@@ -33,14 +43,16 @@ class DialogueActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var listView: ListView
     private lateinit var btnRestart: Button
-    private lateinit var btnSpeak: Button
 
     private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex
+    private lateinit var mediaPlayer: MediaPlayer
 
     private var edgeArray = ArrayList<Edge>()
+    private var fileList = ArrayList<FileLoc>()
     private var selectedChar: String? = null
     private var answer: String? = null
+    private var spoke = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,27 +61,39 @@ class DialogueActivity : AppCompatActivity() {
         textView = findViewById(R.id.tv_dialogue_question)
         listView = findViewById(R.id.lv_dialogue_choices)
         btnRestart = findViewById(R.id.btn_dialogue_restart)
-        btnSpeak = findViewById(R.id.btn_dialogue_speak)
 
         selectedChar = intent.getStringExtra("char")
 
         initializeUi(selectedChar!!)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer.release()
+    }
+
     private fun initializeUi(charName: String) {
         Log.i(LOG_TAG, "initializing UI")
-        val adjacenciesFactory = InjectorUtils.provideAdjacenciesViewModelFactory(charName)
+        val characterFactory = InjectorUtils.provideAdjacenciesViewModelFactory(charName)
         val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory(this)
-        val dialogueViewModel = ViewModelProvider(this, adjacenciesFactory).get(DialogueViewModel::class.java)
+        val dialogueViewModel = ViewModelProvider(this, characterFactory).get(DialogueViewModel::class.java)
         val recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
 
         recognizerViewModel.audioSetup()
 
-        dialogueViewModel.getAdjacencies().observe(this, Observer {
-            if (it.size > 0) {
+        dialogueViewModel.getFileList().observe(this, Observer {
+            fileList = it
+        })
+
+        dialogueViewModel.getAdjacencies().observe(this, Observer { hashMap ->
+            if (hashMap.size > 0) {
                 currentQuestion = dialogueViewModel.retrieveFirst()!!
                 textView.text = currentQuestion.data
                 dialogueViewModel.edges(currentQuestion)
+                if (!spoke && this::currentQuestion.isInitialized) {
+                    getFileLocByVertex(currentQuestion)?.let { dialogueViewModel.fetchAudio(it) } // Testing audio file
+                    spoke = true
+                }
             }
         })
 
@@ -86,6 +110,36 @@ class DialogueActivity : AppCompatActivity() {
         edgeAdapter = EdgeArrayAdapter(this, edgeArray)
         listView.adapter = edgeAdapter
         edgeAdapter.notifyDataSetChanged()
+        mediaPlayer = MediaPlayer()
+
+        dialogueViewModel.getAudio().observe(this, Observer {
+            if (it != null) {
+                playAudioFile(it)
+            }
+        })
+
+        //recognizerViewModel.startRecognition()
+        CoroutineScope(Dispatchers.IO).launch {
+            while (recognizerViewModel.isRecognizing()) {
+                if (answer != null) {
+                    val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                    if (mostRelevantEdge != null) {
+                        Log.i(LOG_TAG, "found most suitable answer: $answer")
+                        recognizerViewModel.stopRecognition()
+                        changeQuestion(mostRelevantEdge, dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                        getFileLocByVertex(currentQuestion)?.let { dialogueViewModel.fetchAudio(it) }
+                        dialogueViewModel.edges(currentQuestion)
+                        answer = null
+                        if (edgeArray.size != 1) {
+                            recognizerViewModel.startRecognition()
+                        }
+                        else {
+                            mediaPlayer.release()
+                        }
+                    }
+                }
+            }
+        }
 
         listView.setOnItemClickListener { parent, view, position, id ->
             val edges = dialogueViewModel.edgesWithoutUiUpdate(currentQuestion)
@@ -107,31 +161,6 @@ class DialogueActivity : AppCompatActivity() {
 
         btnRestart.setOnClickListener {
             initializeUi(selectedChar!!)
-        }
-
-        btnSpeak.setOnClickListener {
-            if (!recognizerViewModel.isRecognizing()) {
-                Toast.makeText(this, "Recognizing..", Toast.LENGTH_SHORT).show()
-                recognizerViewModel.startRecognition()
-                CoroutineScope(Dispatchers.IO).launch {
-                    while (recognizerViewModel.isRecognizing()) {
-                        if (answer != null) {
-                            // TODO: implement end of dialogue - atm a person can speak when there is no more dialogue
-                            val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
-                            if (mostRelevantEdge != null) {
-                                Log.i(LOG_TAG, "found most suitable answer: $answer")
-                                changeQuestion(mostRelevantEdge,
-                                    dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
-                                dialogueViewModel.edges(currentQuestion)
-                                answer = null
-                            }
-                        }
-                    }
-                }
-            } else {
-                Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show()
-                recognizerViewModel.stopRecognition()
-            }
         }
     }
 
@@ -179,7 +208,33 @@ class DialogueActivity : AppCompatActivity() {
         makeToast("Pasirinktas atsakymas: ${edge.destination.data}")
         if (dstVertexEdges.size > 0) {
             currentQuestion = changeEdges(dstVertexEdges, edge)!!
+            spoke = false
         }
+    }
+
+    private fun playAudioFile(audioFile: File) {
+        try {
+            audioFile.deleteOnExit()
+
+            // Tried passing path directly, but kept getting
+            // "Prepare failed.: status=0x1"
+            // so using file descriptor instead
+            val fis = FileInputStream(audioFile)
+            mediaPlayer.setDataSource(fis.fd)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+        } catch (e: IOException) {
+            Log.e(LOG_TAG, e.toString())
+        }
+    }
+
+    private fun getFileLocByVertex(node: Vertex): FileLoc? {
+        fileList.forEach {
+            if (it.nodeId == node.index) {
+                return it
+            }
+        }
+        return null
     }
 
 }

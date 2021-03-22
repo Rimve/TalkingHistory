@@ -4,20 +4,23 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
+import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AdjacenciesDao {
+class CharacterDao {
 
     private val LOG_TAG = this.javaClass.simpleName
 
     private val adjacencies = HashMap<Vertex, ArrayList<Edge>>()
+    private val filesList = ArrayList<FileLoc>()
     private val edges = ArrayList<Edge>()
     private val question = ArrayList<Vertex>()
     private var first: Vertex? = null
 
     private val mutableAdjacenciesList = MutableLiveData<HashMap<Vertex, ArrayList<Edge>>>()
+    private val mutableFilesList = MutableLiveData<ArrayList<FileLoc>>()
     private val mutableEdges = MutableLiveData<ArrayList<Edge>>()
     private val mutableQuestion = MutableLiveData<ArrayList<Vertex>>()
     private val mutableFirst = MutableLiveData<Vertex>()
@@ -27,6 +30,12 @@ class AdjacenciesDao {
         mutableAdjacenciesList.value = adjacencies
         mutableEdges.value = edges
         mutableQuestion.value = question
+        mutableFilesList.value = filesList
+    }
+
+    fun addFile(nodeId: Int, fileName: String) {
+        filesList.add(FileLoc(nodeId, fileName))
+        mutableFilesList.value = filesList
     }
 
     fun createVertex(index: Int, data: String): Vertex {
@@ -75,5 +84,6 @@ class AdjacenciesDao {
     fun getEdges() = mutableEdges as LiveData<ArrayList<Edge>>
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
     fun getFirst() = mutableFirst as LiveData<Vertex>
+    fun getFileList() = mutableFilesList as LiveData<ArrayList<FileLoc>>
 
 }

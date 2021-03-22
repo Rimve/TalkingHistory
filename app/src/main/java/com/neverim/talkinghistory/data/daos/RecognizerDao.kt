@@ -17,7 +17,6 @@ import com.karumi.dexter.Dexter
 import com.neverim.talkinghistory.data.models.PermissionsListener
 import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
-import kotlin.system.exitProcess
 
 class RecognizerDao {
 
@@ -61,7 +60,8 @@ class RecognizerDao {
             Dexter.withContext(context)
                 .withPermissions(
                     Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.INTERNET
                 )
                 .withListener(PermissionsListener(context))
                 .check()
@@ -85,6 +85,7 @@ class RecognizerDao {
             recorder!!.release()
             recorder = null
             recordingThread = null
+            Log.i(LOG_TAG, "stopping recognition")
         }
     }
 

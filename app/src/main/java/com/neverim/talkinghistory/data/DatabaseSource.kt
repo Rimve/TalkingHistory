@@ -2,7 +2,7 @@ package com.neverim.talkinghistory.data
 
 import com.google.firebase.database.FirebaseDatabase
 
-class FirebaseSource {
+class DatabaseSource {
 
     companion object {
         @Volatile private var instance: FirebaseDatabase? = null
@@ -15,8 +15,12 @@ class FirebaseSource {
             }
     }
 
-    fun getNodesRef() = instance?.getReference("nodes") ?: getInstance().getReference("nodes")
+    private fun getFirebaseRef() = instance ?: getInstance()
 
-    fun getAdjacencyRef() = instance?.getReference("adjacencies") ?: getInstance().getReference("adjacencies")
+    fun getNodesRef() = getFirebaseRef().getReference("nodes")
+
+    fun getAdjacencyRef() = getFirebaseRef().getReference("adjacencies")
+
+    fun getFilesLocRef() = getFirebaseRef().getReference("files")
 
 }
