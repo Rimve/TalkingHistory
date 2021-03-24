@@ -21,8 +21,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.DialogueActivity"/>
-        <activity android:name=".ui.TTSActivity"/>
+        <activity android:name=".ui.DialogueActivity" android:parentActivityName=".ui.SelectorActivity"/>
     </application>
 
 </manifest>

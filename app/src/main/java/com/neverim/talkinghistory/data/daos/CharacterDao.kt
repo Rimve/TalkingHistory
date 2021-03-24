@@ -15,15 +15,16 @@ class CharacterDao {
 
     private val adjacencies = HashMap<Vertex, ArrayList<Edge>>()
     private val filesList = ArrayList<FileLoc>()
+    private val charList = ArrayList<String>()
     private val edges = ArrayList<Edge>()
     private val question = ArrayList<Vertex>()
+    private var imageFileName: String = ""
     private var first: Vertex? = null
 
     private val mutableAdjacenciesList = MutableLiveData<HashMap<Vertex, ArrayList<Edge>>>()
     private val mutableFilesList = MutableLiveData<ArrayList<FileLoc>>()
     private val mutableEdges = MutableLiveData<ArrayList<Edge>>()
     private val mutableQuestion = MutableLiveData<ArrayList<Vertex>>()
-    private val mutableFirst = MutableLiveData<Vertex>()
 
     init {
         Log.i(LOG_TAG, "initializing DAO")
@@ -33,8 +34,12 @@ class CharacterDao {
         mutableFilesList.value = filesList
     }
 
-    fun addFile(nodeId: Int, fileName: String) {
-        filesList.add(FileLoc(nodeId, fileName))
+    fun addChar(charName: String) {
+        charList.add(charName)
+    }
+
+    fun addFile(nodeId: Int, charName: String, fileName: String) {
+        filesList.add(FileLoc(nodeId, charName, fileName))
         mutableFilesList.value = filesList
     }
 
@@ -57,19 +62,24 @@ class CharacterDao {
         adjacencies.clear()
         edges.clear()
         question.clear()
+        charList.clear()
         first = null
     }
 
-    fun retrieveFirst() : Vertex? {
+    fun retrieveFirst(): Vertex? {
         Log.i(LOG_TAG, "searching for initial node")
         var lowestIndex = Int.MAX_VALUE
-        for (thing in adjacencies) {
-            if (thing.key.index < lowestIndex) {
-                lowestIndex = thing.key.index
-                first = thing.key
+        for (adj in adjacencies) {
+            if (adj.key.index < lowestIndex) {
+                lowestIndex = adj.key.index
+                first = adj.key
             }
         }
         return first
+    }
+
+    fun setImageFileName(name: String) {
+        imageFileName = name
     }
 
     fun edges(source: Vertex): ArrayList<Edge> {
@@ -83,7 +93,8 @@ class CharacterDao {
     fun getAdjacencies() = mutableAdjacenciesList as LiveData<HashMap<Vertex, ArrayList<Edge>>>
     fun getEdges() = mutableEdges as LiveData<ArrayList<Edge>>
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
-    fun getFirst() = mutableFirst as LiveData<Vertex>
-    fun getFileList() = mutableFilesList as LiveData<ArrayList<FileLoc>>
+    fun getAudioFileList() = mutableFilesList as LiveData<ArrayList<FileLoc>>
+    fun getCharList() = charList
+    fun getImageFileName() = imageFileName
 
 }

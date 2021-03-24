@@ -9,4 +9,5 @@ object Constants {
     const val RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT
     const val RECORDER_CHANNELS_OUT = AudioFormat.CHANNEL_OUT_MONO
     const val LANGUAGE_CODEC = "lt-LT"
+    const val BACK_TIME_INTERVAL = 2000
 }

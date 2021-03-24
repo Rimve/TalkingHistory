@@ -2,25 +2,22 @@ package com.neverim.talkinghistory.data.repositories
 
 import android.util.Log
 import com.google.firebase.database.*
+import com.neverim.talkinghistory.data.DatabaseCallback
 import com.neverim.talkinghistory.data.daos.CharacterDao
 import com.neverim.talkinghistory.data.DatabaseSource
+import com.neverim.talkinghistory.data.IDatabaseResponse
 import com.neverim.talkinghistory.data.models.Vertex
 
 
-class CharacterRepository private constructor(
-    private val characterDao: CharacterDao,
-    private val charName: String) {
+class CharacterRepository private constructor(private val characterDao: CharacterDao) {
 
     private val LOG_TAG = this.javaClass.simpleName
 
     private val databaseHelper = DatabaseSource()
     private var vertices: HashMap<String, Vertex> = HashMap()
-    private var mNodesRef: DatabaseReference = databaseHelper.getNodesRef().child(charName)
-    private var mAdjacenciesRef: DatabaseReference = databaseHelper.getAdjacencyRef().child(charName)
-    private var mAudioFilesRef: DatabaseReference = databaseHelper.getFilesLocRef().child(charName).child("audio")
 
-    fun addFile(nodeId: Int, fileName: String) {
-        characterDao.addFile(nodeId, fileName)
+    fun addFile(nodeId: Int, charName: String, fileName: String) {
+        characterDao.addFile(nodeId, charName, fileName)
     }
 
     fun createVertex(index: Int, node: String): Vertex {
@@ -40,11 +37,9 @@ class CharacterRepository private constructor(
 
     fun getEdges() = characterDao.getEdges()
 
-    fun getFiles() = characterDao.getFileList()
+    fun getAudioFileList() = characterDao.getAudioFileList()
 
     fun getQuestions() = characterDao.getQuestions()
-
-    fun getFirst() = characterDao.getFirst()
 
     fun retrieveFirst() : Vertex? = characterDao.retrieveFirst()
 
@@ -54,34 +49,124 @@ class CharacterRepository private constructor(
 
     fun edgesWithoutUi(source: Vertex) = characterDao.edgesWithoutUi(source)
 
-    private val fileListListener = object : ValueEventListener {
-        override fun onDataChange(dataSnapshot: DataSnapshot) {
-            getFileListFromDatabase(dataSnapshot)
-        }
+    fun fetchCharDataFromDb(charName: String) {
+        databaseHelper.getNodesRef().keepSynced(true)
+        databaseHelper.getAdjacencyRef().keepSynced(true)
+        databaseHelper.getFilesLocRef().keepSynced(true)
+        getNodes(charName)
+        getAdjacencies(charName)
+        getAudioFileList(charName)
+    }
 
-        override fun onCancelled(databaseError: DatabaseError) {
-            Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
+    fun fetchCharListFromDb(callback: DatabaseCallback) {
+        databaseHelper.getNodesRef().get().addOnCompleteListener { task ->
+            Log.i(LOG_TAG, "getting all available chars from database")
+            val response = IDatabaseResponse()
+            if (task.isSuccessful) {
+                val result = task.result
+                result?.value?.let {
+                    for (entry in result.value as HashMap<String, ArrayList<String>>) {
+                        characterDao.addChar(entry.key)
+                    }
+                    response.data = characterDao.getCharList()
+                }
+            }
+            else {
+                Log.e(LOG_TAG, task.exception.toString())
+                response.exception = task.exception
+            }
+            callback.onResponse(response)
         }
     }
 
-    private val nodesListener = object : ValueEventListener {
-        override fun onDataChange(dataSnapshot: DataSnapshot) {
-            getNodesFromDatabase(dataSnapshot)
-            mAdjacenciesRef.addValueEventListener(adjacenciesListener)
-        }
-
-        override fun onCancelled(databaseError: DatabaseError) {
-            Log.w(LOG_TAG, "nodesListener load:onCancelled", databaseError.toException())
+    fun getImageFileName(charName: String, callback: DatabaseCallback) {
+        databaseHelper.getFilesLocRef().child(charName).child("image").get().addOnCompleteListener { task ->
+            Log.i(LOG_TAG, "getting image fileName for '$charName'")
+            val response = IDatabaseResponse()
+            if (task.isSuccessful) {
+                val result = task.result
+                result?.value?.let { response.data = result.value as String }
+            }
+            else {
+                Log.e(LOG_TAG, task.toString())
+                response.exception = task.exception
+            }
+            callback.onResponse(response)
         }
     }
 
-    private val adjacenciesListener = object : ValueEventListener {
-        override fun onDataChange(dataSnapshot: DataSnapshot) {
-            getAdjacenciesFromDatabase(dataSnapshot)
+    private fun getAudioFileList(charName: String) {
+        databaseHelper.getFilesLocRef().child(charName).child("audio").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                getFileListFromDatabase(dataSnapshot, charName)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
+            }
+        })
+    }
+
+    private fun getNodes(charName: String) {
+        databaseHelper.getNodesRef().child(charName).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                getNodesFromDatabase(dataSnapshot)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(LOG_TAG, "nodesListener load:onCancelled", databaseError.toException())
+            }
+        })
+    }
+
+    private fun getAdjacencies(charName: String) {
+        databaseHelper.getAdjacencyRef().child(charName).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                getAdjacenciesFromDatabase(dataSnapshot)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(LOG_TAG, "adjacenciesListener load:onCancelled", databaseError.toException())
+            }
+        })
+    }
+
+    private fun getFileListFromDatabase(snapshot: DataSnapshot, charName: String) {
+        Log.i(LOG_TAG, "getting file list from database")
+        if (snapshot.value is ArrayList<*>) {
+            val files = snapshot.value as ArrayList<String?>
+            files.forEachIndexed { nodeId, data ->
+                if (data != null) {
+                    addFile(nodeId, charName, data)
+                }
+            }
         }
 
-        override fun onCancelled(databaseError: DatabaseError) {
-            Log.w(LOG_TAG, "adjacenciesListener load:onCancelled", databaseError.toException())
+        if (snapshot.value is HashMap<*, *>) {
+            val files = snapshot.value as HashMap<String, String>
+            for ((key, value) in files) {
+                addFile(key.toInt(), charName, value)
+            }
+        }
+    }
+
+    private fun getNodesFromDatabase(snapshot: DataSnapshot) {
+        Log.i(LOG_TAG, "getting vertexes from database")
+        if (snapshot.value is ArrayList<*>) {
+            val nodes = snapshot.value as ArrayList<String?>
+            nodes.forEachIndexed { index, data ->
+                if (data != null) {
+                    vertices[index.toString()] =
+                        createVertex(index, data)
+                }
+            }
+        }
+
+        if (snapshot.value is HashMap<*, *>) {
+            val nodes = snapshot.value as HashMap<String, String>
+            for ((key, value) in nodes) {
+                vertices[key] = createVertex(key.toInt(), value)
+            }
         }
     }
 
@@ -119,59 +204,12 @@ class CharacterRepository private constructor(
         }
     }
 
-    private fun getFileListFromDatabase(snapshot: DataSnapshot) {
-        Log.i(LOG_TAG, "getting file list from database")
-        if (snapshot.value is ArrayList<*>) {
-            val files = snapshot.value as ArrayList<String?>
-            files.forEachIndexed { nodeId, data ->
-                if (data != null) {
-                    addFile(nodeId, data)
-                }
-            }
-        }
-
-        if (snapshot.value is HashMap<*, *>) {
-            val files = snapshot.value as HashMap<String, String>
-            for ((key, value) in files) {
-                addFile(key.toInt(), value)
-            }
-        }
-    }
-
-    private fun getNodesFromDatabase(snapshot: DataSnapshot) {
-        Log.i(LOG_TAG, "getting vertexes from database")
-        if (snapshot.value is ArrayList<*>) {
-            val nodes = snapshot.value as ArrayList<String?>
-            nodes.forEachIndexed { index, data ->
-                if (data != null) {
-                    vertices[index.toString()] =
-                        createVertex(index, data)
-                }
-            }
-        }
-
-        if (snapshot.value is HashMap<*, *>) {
-            val nodes = snapshot.value as HashMap<String, String>
-            for ((key, value) in nodes) {
-                vertices[key] = createVertex(key.toInt(), value)
-            }
-        }
-    }
-
-    fun fetchFromDatabase() {
-        mNodesRef.keepSynced(true)
-        mAdjacenciesRef.keepSynced(true)
-        mAudioFilesRef.keepSynced(true)
-        mNodesRef.addValueEventListener(nodesListener)
-        mAudioFilesRef.addValueEventListener(fileListListener)
-    }
-
     companion object {
         @Volatile private var instance: CharacterRepository? = null
 
-        fun getInstance(adjacenciesDao: CharacterDao, charName: String) =
+        fun getInstance(adjacenciesDao: CharacterDao) =
             instance ?: synchronized(this) {
-                instance ?: CharacterRepository(adjacenciesDao, charName).also { instance = it }
+                instance ?: CharacterRepository(adjacenciesDao).also { instance = it }
             }
     }
 

@@ -11,13 +11,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.data.StorageSource
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
 import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
-import com.neverim.talkinghistory.ui.viewmodels.DialogueViewModel
+import com.neverim.talkinghistory.ui.viewmodels.CharacterViewModel
 import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModel
+import com.neverim.talkinghistory.ui.viewmodels.StorageViewModel
 import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
 import com.neverim.talkinghistory.utilities.InjectorUtils
@@ -27,10 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.*
 import javax.net.ssl.*
 import kotlin.collections.ArrayList
@@ -74,30 +71,32 @@ class DialogueActivity : AppCompatActivity() {
 
     private fun initializeUi(charName: String) {
         Log.i(LOG_TAG, "initializing UI")
-        val characterFactory = InjectorUtils.provideAdjacenciesViewModelFactory(charName)
+        val characterFactory = InjectorUtils.provideCharacterViewModelFactory()
         val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory(this)
-        val dialogueViewModel = ViewModelProvider(this, characterFactory).get(DialogueViewModel::class.java)
+        val storageFactory = InjectorUtils.provideStorageViewModelFactory()
+        val characterViewModel = ViewModelProvider(this, characterFactory).get(CharacterViewModel::class.java)
         val recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
+        val storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
+
+        characterViewModel.getAudioFileList().observe(this, Observer { fileList = it })
 
         recognizerViewModel.audioSetup()
 
-        dialogueViewModel.getFileList().observe(this, Observer {
-            fileList = it
-        })
+        characterViewModel.fetchCharDataFromDb(charName)
 
-        dialogueViewModel.getAdjacencies().observe(this, Observer { hashMap ->
+        characterViewModel.getAdjacencies().observe(this, Observer { hashMap ->
             if (hashMap.size > 0) {
-                currentQuestion = dialogueViewModel.retrieveFirst()!!
+                currentQuestion = characterViewModel.retrieveFirst()!!
                 textView.text = currentQuestion.data
-                dialogueViewModel.edges(currentQuestion)
+                characterViewModel.edges(currentQuestion)
                 if (!spoke && this::currentQuestion.isInitialized) {
-                    getFileLocByVertex(currentQuestion)?.let { dialogueViewModel.fetchAudio(it) } // Testing audio file
+                    getFileLocByVertex(currentQuestion)?.let { storageViewModel.fetchAudio(charName, it) } // Testing audio file
                     spoke = true
                 }
             }
         })
 
-        dialogueViewModel.getEdges().observe(this, Observer {
+        characterViewModel.getEdges().observe(this, Observer {
             edgeArray.clear()
             edgeArray.addAll(it)
             edgeAdapter.notifyDataSetChanged()
@@ -112,7 +111,7 @@ class DialogueActivity : AppCompatActivity() {
         edgeAdapter.notifyDataSetChanged()
         mediaPlayer = MediaPlayer()
 
-        dialogueViewModel.getAudio().observe(this, Observer {
+        storageViewModel.getAudio().observe(this, Observer {
             if (it != null) {
                 playAudioFile(it)
             }
@@ -126,9 +125,9 @@ class DialogueActivity : AppCompatActivity() {
                     if (mostRelevantEdge != null) {
                         Log.i(LOG_TAG, "found most suitable answer: $answer")
                         recognizerViewModel.stopRecognition()
-                        changeQuestion(mostRelevantEdge, dialogueViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
-                        getFileLocByVertex(currentQuestion)?.let { dialogueViewModel.fetchAudio(it) }
-                        dialogueViewModel.edges(currentQuestion)
+                        changeQuestion(mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                        getFileLocByVertex(currentQuestion)?.let { storageViewModel.fetchAudio(charName, it) }
+                        characterViewModel.edges(currentQuestion)
                         answer = null
                         if (edgeArray.size != 1) {
                             recognizerViewModel.startRecognition()
@@ -142,17 +141,17 @@ class DialogueActivity : AppCompatActivity() {
         }
 
         listView.setOnItemClickListener { parent, view, position, id ->
-            val edges = dialogueViewModel.edgesWithoutUiUpdate(currentQuestion)
+            val edges = characterViewModel.edgesWithoutUiUpdate(currentQuestion)
             val element: Edge = listView.adapter?.getItem(position) as Edge
 
             for (edge in edges) {
                 if (edge.destination.data == element.destination.data) {
-                    val dstVertexEdges = dialogueViewModel.edgesWithoutUiUpdate(edge.destination)
+                    val dstVertexEdges = characterViewModel.edgesWithoutUiUpdate(edge.destination)
                     for (dstEdge in dstVertexEdges) {
                         if (edge.source.data == textView.text) {
                             textView.text = dstEdge.destination.data
                             currentQuestion = dstEdge.destination
-                            dialogueViewModel.edges(currentQuestion)
+                            characterViewModel.edges(currentQuestion)
                         }
                     }
                 }

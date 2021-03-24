@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    card_view:contentPadding="2dp"
+    card_view:cardCornerRadius="20dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ProgressBar
+            android:id="@+id/pb_recycler_picture"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/tv_char_name"
+            android:indeterminate="true"
+            android:scaleType="fitCenter"
+            android:theme="@style/ProgressBarStyle" />
+
+        <ImageView
+            android:id="@+id/iv_char_image"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/tv_char_name"
+            android:scaleType="centerCrop"
+            android:background="@drawable/round_outline"
+            android:outlineProvider="background" />
+
+        <TextView
+            android:id="@+id/tv_char_name"
+            android:text="test aaa text"
+            android:background="@drawable/round_outline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tv_char_desc"
+            android:text="This history person had so much time during the 15th century.
+ He travelled through the space and time continuum and has
+ reached incredible achievements."
+            android:background="@drawable/round_outline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:layout_below="@id/iv_char_image"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="16sp" />
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>
