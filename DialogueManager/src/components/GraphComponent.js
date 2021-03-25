@@ -8,7 +8,7 @@ import {
     getNodeOfIdRef,
     getCharAdjRef,
     getCharNodeRef,
-    getDstNode
+    getDstNode, getCharQuestionsRef, getCharQuestionOfIdRef
 } from "../services/DatabaseService";
 import "firebase/database";
 import '../styles/CyStyle.css';
@@ -21,7 +21,9 @@ class GraphComponent extends React.Component{
         this.state = {
             nodes: [],
             edges: [],
+            questionNodeIds: [],
             nodeToEdit: null,
+            nodeToConnectFrom: null,
             name: "",
             update: false,
             showEdit: false
@@ -32,20 +34,31 @@ class GraphComponent extends React.Component{
         this.setState({showEdit: data});
     };
 
-    handleEdit = (data) => {
+    handleEdit = (node) => {
         const {name} = this.state;
+        const {questionNodeIds} = this.state;
 
-        this.addNodeToDatabase(name, data);
+        if (node.isQuestion) {
+            this.setNodeAsQuestion(name, node);
+            questionNodeIds.push(Number(node.data.id));
+        }
+        else {
+            this.removeNodeAsQuestion(name, node);
+            questionNodeIds.pop(Number(node.data.id));
+        }
+
+        this.addNodeToDatabase(name, node.data);
         this.setState({update: false});
     };
 
     renderCytoscapeElement() {
+        const {questionNodeIds} = this.state;
 
         if (!cytoscape('core', 'cxtmenu')) {
             cytoscape.use(cxtmenu);
         }
 
-        let defaults = {
+        let nodeCtxSettings = {
             menuRadius: function(ele){ return 50; },
             selector: 'node',
             commands: [
@@ -64,7 +77,8 @@ class GraphComponent extends React.Component{
                     content: 'Edit',
                     contentStyle: {},
                     select: (ele) => {
-                        this.setState({nodeToEdit: ele.data()});
+                        let nodeToEdit = this.getNodeByIndex(this.state.nodes, ele.data().id);
+                        this.setState({nodeToEdit: nodeToEdit});
                         this.setState({showEdit: true});
                     },
                     enabled: true
@@ -77,6 +91,20 @@ class GraphComponent extends React.Component{
                         this.addNode(ele.data());
                     },
                     enabled: true
+                },
+                {
+                    fillColor: 'rgba(222,4,0,0.6)',
+                    content: 'Connect to..',
+                    contentStyle: {},
+                    select: (ele) => {
+                        if (this.state.nodeToConnectFrom == null) {
+                            this.setState({nodeToConnectFrom: ele.data()});
+                        }
+                        else {
+                            this.setState({nodeToConnectFrom: null});
+                        }
+                    },
+                    enabled: true
                 }
             ],
             fillColor: 'rgba(0, 0, 0, 0.75)',
@@ -85,7 +113,39 @@ class GraphComponent extends React.Component{
             indicatorSize: 12,
             separatorWidth: 5,
             spotlightPadding: 5,
-            adaptativeNodeSpotlightRadius: false,
+            adaptativeNodeSpotlightRadius: true,
+            minSpotlightRadius: 24,
+            maxSpotlightRadius: 38,
+            openMenuEvents: 'cxttapstart taphold',
+            itemColor: 'white',
+            itemTextShadowColor: 'transparent',
+            zIndex: 9999,
+            atMouse: false,
+            outsideMenuCancel: false
+        };
+
+        let edgeCtxSettings = {
+            menuRadius: function(ele){ return 50; },
+            selector: 'edge',
+            commands: [
+                {
+                    fillColor: 'rgba(222,155,39,0.85)',
+                    opacity: 0.1,
+                    content: 'Remove',
+                    contentStyle: {},
+                    select: (ele) => {
+                        this.removeEdge(ele.data().source, ele.data().target);
+                    },
+                    enabled: true
+                }
+            ],
+            fillColor: 'rgba(0, 0, 0, 0.75)',
+            activeFillColor: 'rgba(59,82,86,0.5)',
+            activePadding: 20,
+            indicatorSize: 12,
+            separatorWidth: 0,
+            spotlightPadding: 5,
+            adaptativeNodeSpotlightRadius: true,
             minSpotlightRadius: 24,
             maxSpotlightRadius: 38,
             openMenuEvents: 'cxttapstart taphold',
@@ -109,7 +169,7 @@ class GraphComponent extends React.Component{
                     .css({
                         'height': 'label',
                         'width': 'label',
-                        'background-color' : '#dbd9ff',
+                        'background-color' : '#ffc0b2',
                         'background-fit': 'cover',
                         'border-color': '#7a070c',
                         'border-width': 2,
@@ -147,12 +207,29 @@ class GraphComponent extends React.Component{
                     nodeDimensionsIncludeLabels: true
                 }
             });
-        cy.cxtmenu(defaults);
+        // Add context menu on nodes
+        cy.cxtmenu(nodeCtxSettings);
+
+        // Add context menu on edges
+        cy.cxtmenu(edgeCtxSettings);
+
+        // Add a ay to connect one node to already existing one
+        cy.on('click', 'node', (evt) => {
+            const {nodeToConnectFrom} = this.state;
+            if (nodeToConnectFrom != null) {
+                this.connectNodes(evt.target.id(), nodeToConnectFrom.id)
+            }
+        });
+
+        for (let index in questionNodeIds) {
+            cy.getElementById(questionNodeIds[index]).style('background-color', '#bbf3ff');
+        }
     }
 
     async getData(name) {
         let nodes = [];
         let edges = [];
+        let questionNodes = [];
 
         await getCharNodeRef(name).once('value')
             .then((snapshot) => {
@@ -162,9 +239,23 @@ class GraphComponent extends React.Component{
                         "data": {
                             id: Number(results[index][0]),
                             scratch: results[index][1]
-                        }
+                        },
+                        "isQuestion": false
                     };
                     nodes.push(node);
+                }
+            });
+
+        await getCharQuestionsRef(name).once('value')
+            .then((snapshot) => {
+                if (snapshot.val() != null) {
+                    let results = Object.entries(snapshot.val());
+                    for (let index in results) {
+                        let questionNode = this.getNodeByIndex(nodes, Number(results[index][0]));
+                        nodes[nodes.indexOf(questionNode)].isQuestion = true;
+                        questionNodes.push(Number(results[index][0]));
+                    }
+                    this.setState({questionNodeIds: questionNodes});
                 }
             });
 
@@ -215,13 +306,16 @@ class GraphComponent extends React.Component{
         };
         nodes.push(newNode);
 
-        this.setState({nodeToEdit: newNode.data});
+        this.setState({nodeToEdit: newNode});
         this.setState({showEdit: true});
+
+        let fromNodeId = nodes[nodes.indexOf(nodeToFind)].data;
+        let toNodeId = nodes[nodes.indexOf(newNode)].data;
 
         const edge = {
             "data": {
-                source: nodes[nodes.indexOf(nodeToFind)].data.id,
-                target: nodes[nodes.indexOf(newNode)].data.id
+                source: fromNodeId.id,
+                target: toNodeId.id
             }
         };
         edges.push(edge);
@@ -233,7 +327,7 @@ class GraphComponent extends React.Component{
         });
 
         this.addNodeToDatabase(name, newNode.data);
-        this.addAdjToDatabase(name, nodes[nodes.indexOf(nodeToFind)].data, nodes[nodes.indexOf(newNode)].data);
+        this.addAdjToDatabase(name, fromNodeId, toNodeId);
     }
 
     removeNode(id) {
@@ -276,6 +370,57 @@ class GraphComponent extends React.Component{
         });
     }
 
+    connectNodes(nodeToId, nodeFromId) {
+        const {nodes} = this.state;
+        const {edges} = this.state;
+        const {name} = this.state;
+
+        let fromNodeObj = this.getNodeByIndex(nodes, nodeFromId);
+        let toNodeObj = this.getNodeByIndex(nodes, nodeToId);
+
+        let fromNode = nodes[nodes.indexOf(fromNodeObj)].data;
+        let toNode = nodes[nodes.indexOf(toNodeObj)].data;
+
+        const edge = {
+            "data": {
+                source: fromNode.id,
+                target: toNode.id
+            }
+        };
+        edges.push(edge);
+
+        this.setState({
+            edges: edges,
+            nodeToConnectFrom: null,
+            update: false
+        });
+
+        this.addAdjToDatabase(name, fromNode, toNode);
+    }
+
+    removeEdge(srcNodeId, targetNodeId) {
+        const {nodes} = this.state;
+        const {name} = this.state;
+
+        let filteredEdges = this.state.edges.filter((edge) => {
+            if (edge.data.target === targetNodeId && edge.data.source === srcNodeId) {
+                nodes.map((node) => {
+                    if (node.data.id === edge.data.source) {
+                        this.removeTargetAdjFromDb(name, srcNodeId, targetNodeId);
+                    }
+                });
+            }
+            else {
+                return edge;
+            }
+        });
+
+        this.setState({
+            edges: filteredEdges,
+            update: false
+        });
+    }
+
     // Adds node entry to database nodes table
     addNodeToDatabase(name, node) {
         getNodeOfIdRef(name, [node.id]).set(node.scratch);
@@ -308,6 +453,14 @@ class GraphComponent extends React.Component{
                     }
                 })
             });
+    }
+
+    setNodeAsQuestion(name, node) {
+        getCharQuestionOfIdRef(name, [node.data.id]).set(node.isQuestion);
+    }
+
+    removeNodeAsQuestion(name, node) {
+        getCharQuestionOfIdRef(name, [node.data.id]).remove();
     }
 
     getNodeByIndex(nodes, nodeToFind) {

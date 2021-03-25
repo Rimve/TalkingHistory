@@ -100,7 +100,7 @@ class DialogueActivity : AppCompatActivity() {
         edgeAdapter.notifyDataSetChanged()
         mediaPlayer = MediaPlayer()
 
-        recognizerViewModel.startRecognition(this)
+        //recognizerViewModel.startRecognition(this)
         CoroutineScope(Dispatchers.IO).launch {
             while (recognizerViewModel.isRecognizing()) {
                 if (answer != null) {
@@ -228,7 +228,7 @@ class DialogueActivity : AppCompatActivity() {
 
         storageViewModel.getAudio().observe(this, Observer { audioFile ->
             if (audioFile != null) {
-                playAudioFile(audioFile)
+                //playAudioFile(audioFile)
             }
         })
     }

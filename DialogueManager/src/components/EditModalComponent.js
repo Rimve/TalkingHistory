@@ -22,13 +22,27 @@ class EditModalComponent extends React.Component {
         this.props.showCallBack(false);
     };
 
-    handleChange = (change) => {
+    handleTextChange = (change) => {
         let newNode = this.state.nodeToEdit;
-        newNode.scratch = change.target.value;
+        newNode.data.scratch = change.target.value;
         this.setState({
             nodeToEdit: newNode
         })
     };
+
+
+    handleCheckBoxChange = (change) => {
+        let newNode = this.state.nodeToEdit;
+        newNode.isQuestion = change.target.checked;
+        this.setState({nodeToEdit: newNode})
+    };
+
+    handleDefaultValue() {
+        if (this.state.nodeToEdit.data.scratch.includes("empty"))
+            return "";
+        else
+            return this.state.nodeToEdit.data.scratch
+    }
 
     render() {
         return (
@@ -38,8 +52,10 @@ class EditModalComponent extends React.Component {
                         <Modal.Title>Dialogue entry</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <textarea placeholder={this.state.nodeToEdit.scratch}
-                                  onChange={this.handleChange} className='form-control' rows='3' />
+                        <label>Is question: </label>
+                        <input name="isQuestion" type="checkbox" checked={this.state.nodeToEdit.isQuestion} onChange={this.handleCheckBoxChange} />
+                        <textarea defaultValue={this.handleDefaultValue()}
+                                  onChange={this.handleTextChange} className='form-control' rows='3' />
                     </Modal.Body>
                     <Modal.Footer>
                         <button className='modal-btn cancel-btn' onClick={this.handleClose} >
