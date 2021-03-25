@@ -11,8 +11,8 @@ class CharacterViewModel(private val characterRepository: CharacterRepository) :
 
     fun getAdjacencies() = characterRepository.getAdjacencies()
     fun getEdges() = characterRepository.getEdges()
-    fun getAudioFileList() = characterRepository.getAudioFileList()
-    fun getImageFileName(charName: String, callback: DatabaseCallback) = characterRepository.getImageFileName(charName, callback)
+    fun getAudioFileList(callback: DatabaseCallback, charName: String) = characterRepository.getAudioFileList(callback, charName)
+    fun getImageFileName(callback: DatabaseCallback, charName: String) = characterRepository.getImageFileName(callback, charName)
     fun fetchCharDataFromDb(charName: String) = characterRepository.fetchCharDataFromDb(charName)
     fun fetchCharListFromDb(callback: DatabaseCallback) = characterRepository.fetchCharListFromDb(callback)
     fun createVertex(index: Int, data: String) = characterRepository.createVertex(index, data)

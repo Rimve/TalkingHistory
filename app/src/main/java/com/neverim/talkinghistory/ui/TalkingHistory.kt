@@ -1,12 +1,9 @@
 package com.neverim.talkinghistory.ui
 
-import android.Manifest.permission.*
 import android.app.Application
 import android.content.res.Configuration
 import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
-import com.karumi.dexter.Dexter
-import com.neverim.talkinghistory.data.models.PermissionsListener
 
 
 class TalkingHistory : Application() {
@@ -16,14 +13,8 @@ class TalkingHistory : Application() {
     override fun onCreate() {
         super.onCreate()
         // Enable offline database
-        Log.i(LOG_TAG,"setting database persistence")
+        Log.i(LOG_TAG, "setting database persistence")
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-        // Ask for permissions
-        Log.i(LOG_TAG,"asking for permissions")
-        Dexter.withContext(this)
-            .withPermissions(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE)
-            .withListener(PermissionsListener(this))
-            .check()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -32,6 +23,15 @@ class TalkingHistory : Application() {
 
     override fun onLowMemory() {
         super.onLowMemory()
+    }
+
+    companion object {
+        @Volatile private var instance: TalkingHistory? = null
+
+        fun getInstance() =
+            instance ?: synchronized(this) {
+                instance ?: TalkingHistory().also { instance = it }
+            }
     }
 
 }

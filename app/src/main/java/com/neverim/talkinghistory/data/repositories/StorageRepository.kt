@@ -3,7 +3,7 @@ package com.neverim.talkinghistory.data.repositories
 import android.graphics.BitmapFactory
 import android.util.Log
 import com.neverim.talkinghistory.data.DatabaseCallback
-import com.neverim.talkinghistory.data.IDatabaseResponse
+import com.neverim.talkinghistory.data.models.IDatabaseResponse
 import com.neverim.talkinghistory.data.StorageSource
 import com.neverim.talkinghistory.data.daos.StorageDao
 import com.neverim.talkinghistory.data.models.FileLoc

@@ -5,7 +5,7 @@ import com.google.firebase.database.*
 import com.neverim.talkinghistory.data.DatabaseCallback
 import com.neverim.talkinghistory.data.daos.CharacterDao
 import com.neverim.talkinghistory.data.DatabaseSource
-import com.neverim.talkinghistory.data.IDatabaseResponse
+import com.neverim.talkinghistory.data.models.IDatabaseResponse
 import com.neverim.talkinghistory.data.models.Vertex
 
 
@@ -37,8 +37,6 @@ class CharacterRepository private constructor(private val characterDao: Characte
 
     fun getEdges() = characterDao.getEdges()
 
-    fun getAudioFileList() = characterDao.getAudioFileList()
-
     fun getQuestions() = characterDao.getQuestions()
 
     fun retrieveFirst() : Vertex? = characterDao.retrieveFirst()
@@ -55,7 +53,6 @@ class CharacterRepository private constructor(private val characterDao: Characte
         databaseHelper.getFilesLocRef().keepSynced(true)
         getNodes(charName)
         getAdjacencies(charName)
-        getAudioFileList(charName)
     }
 
     fun fetchCharListFromDb(callback: DatabaseCallback) {
@@ -79,7 +76,7 @@ class CharacterRepository private constructor(private val characterDao: Characte
         }
     }
 
-    fun getImageFileName(charName: String, callback: DatabaseCallback) {
+    fun getImageFileName(callback: DatabaseCallback, charName: String) {
         databaseHelper.getFilesLocRef().child(charName).child("image").get().addOnCompleteListener { task ->
             Log.i(LOG_TAG, "getting image fileName for '$charName'")
             val response = IDatabaseResponse()
@@ -95,16 +92,23 @@ class CharacterRepository private constructor(private val characterDao: Characte
         }
     }
 
-    private fun getAudioFileList(charName: String) {
-        databaseHelper.getFilesLocRef().child(charName).child("audio").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                getFileListFromDatabase(dataSnapshot, charName)
+    fun getAudioFileList(callback: DatabaseCallback, charName: String) {
+        databaseHelper.getFilesLocRef().child(charName).child("audio").get().addOnCompleteListener { task ->
+            Log.i(LOG_TAG, "getting audio file list for '$charName'")
+            val response = IDatabaseResponse()
+            if (task.isSuccessful) {
+                val result = task.result
+                result?.value?.let {
+                    getFileListFromDatabase(result, charName)
+                    response.data = characterDao.getAudioFileList()
+                }
             }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(LOG_TAG, "loadPost:onCancelled", databaseError.toException())
+            else {
+                Log.e(LOG_TAG, task.toString())
+                response.exception = task.exception
             }
-        })
+            callback.onResponse(response)
+        }
     }
 
     private fun getNodes(charName: String) {

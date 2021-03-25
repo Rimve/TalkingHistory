@@ -18,11 +18,9 @@ class CharacterDao {
     private val charList = ArrayList<String>()
     private val edges = ArrayList<Edge>()
     private val question = ArrayList<Vertex>()
-    private var imageFileName: String = ""
     private var first: Vertex? = null
 
     private val mutableAdjacenciesList = MutableLiveData<HashMap<Vertex, ArrayList<Edge>>>()
-    private val mutableFilesList = MutableLiveData<ArrayList<FileLoc>>()
     private val mutableEdges = MutableLiveData<ArrayList<Edge>>()
     private val mutableQuestion = MutableLiveData<ArrayList<Vertex>>()
 
@@ -31,7 +29,6 @@ class CharacterDao {
         mutableAdjacenciesList.value = adjacencies
         mutableEdges.value = edges
         mutableQuestion.value = question
-        mutableFilesList.value = filesList
     }
 
     fun addChar(charName: String) {
@@ -40,7 +37,6 @@ class CharacterDao {
 
     fun addFile(nodeId: Int, charName: String, fileName: String) {
         filesList.add(FileLoc(nodeId, charName, fileName))
-        mutableFilesList.value = filesList
     }
 
     fun createVertex(index: Int, data: String): Vertex {
@@ -78,10 +74,6 @@ class CharacterDao {
         return first
     }
 
-    fun setImageFileName(name: String) {
-        imageFileName = name
-    }
-
     fun edges(source: Vertex): ArrayList<Edge> {
         edges.clear()
         edges.addAll(adjacencies[source]?: arrayListOf())
@@ -93,8 +85,7 @@ class CharacterDao {
     fun getAdjacencies() = mutableAdjacenciesList as LiveData<HashMap<Vertex, ArrayList<Edge>>>
     fun getEdges() = mutableEdges as LiveData<ArrayList<Edge>>
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
-    fun getAudioFileList() = mutableFilesList as LiveData<ArrayList<FileLoc>>
+    fun getAudioFileList() = filesList
     fun getCharList() = charList
-    fun getImageFileName() = imageFileName
 
 }

@@ -1,8 +1,6 @@
 package com.neverim.talkinghistory.data.daos
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
@@ -13,8 +11,6 @@ import com.google.api.gax.rpc.ResponseObserver
 import com.google.api.gax.rpc.StreamController
 import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
-import com.karumi.dexter.Dexter
-import com.neverim.talkinghistory.data.models.PermissionsListener
 import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
 
@@ -48,23 +44,9 @@ class RecognizerDao {
     fun isRecognizing() = isRecognizing
     fun getTranscript() = mutableTranscription as LiveData<String>
 
-    private fun hasMicrophone(context: Context): Boolean {
-        val pManager = context.packageManager
-        return pManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
-    }
-
     fun audioSetup(context: Context): Boolean {
         Log.i(LOG_TAG, "checking if microphone is available")
-        return if (hasMicrophone(context)) {
-            Log.i(LOG_TAG, "asking for permissions")
-            Dexter.withContext(context)
-                .withPermissions(
-                    Manifest.permission.RECORD_AUDIO,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.INTERNET
-                )
-                .withListener(PermissionsListener(context))
-                .check()
+        return if (HelperUtils.hasMicrophone(context)) {
             true
         } else {
             Log.i(LOG_TAG, "microphone is not available")
@@ -133,7 +115,7 @@ class RecognizerDao {
                         for (response in responses) {
                             val result = response.resultsList[0]
                             val alternative = result.alternativesList[0]
-                            Log.i(LOG_TAG, "completed transcript: ${alternative.transcript}")
+                            Log.i(LOG_TAG, "completed transcript session: ${alternative.transcript}")
                         }
                     }
 
@@ -162,12 +144,13 @@ class RecognizerDao {
                 recorder!!.startRecording()
                 Log.i(LOG_TAG, "starting recognition")
                 val startTime = System.currentTimeMillis()
+
                 // Audio Input Stream
                 while (isRecognizing) {
                     val estimatedTime = System.currentTimeMillis() - startTime
                     val data = ByteArray(sizeInBytes)
                     recorder!!.read(data, 0, sizeInBytes)
-                    if (estimatedTime > 60000) { // stream can not exceed 60 seconds
+                    if (estimatedTime > 60000) { // Audio stream can not exceed 60 seconds
                         Log.i(LOG_TAG, "stopping recognition")
                         stopRecognition()
                         break

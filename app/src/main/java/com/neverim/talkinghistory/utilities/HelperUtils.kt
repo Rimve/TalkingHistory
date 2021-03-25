@@ -1,13 +1,16 @@
 package com.neverim.talkinghistory.utilities
 
+import android.Manifest
 import android.content.Context
-import android.media.AudioManager
-import android.media.AudioTrack
+import android.content.pm.PackageManager
 import com.google.api.gax.core.CredentialsProvider
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.google.cloud.speech.v1.SpeechSettings
+import com.karumi.dexter.Dexter
 import com.neverim.talkinghistory.R
+import com.neverim.talkinghistory.data.models.PermissionsListener
+import com.neverim.talkinghistory.ui.TalkingHistory
 import java.io.*
 import java.util.*
 
@@ -41,55 +44,8 @@ object HelperUtils {
         return if (c1 == c2) 0 else 1
     }
 
-    private suspend fun minEdits(vararg nums: Int): Int {
-        return Arrays.stream(nums).min().orElse(Int.MAX_VALUE)
-    }
-
-    @Throws(IOException::class)
-    fun playAudioFromPath(filePath: String?) {
-        val recorderSampleRate: Int = Constants.RECORDER_SAMPLE_RATE
-        val recorderAudioEncoding = Constants.RECORDER_AUDIO_ENCODING
-        val recorderChannelsOut = Constants.RECORDER_CHANNELS_OUT
-
-        if (filePath == null) return
-
-        val file = File(filePath)
-        val byteData = ByteArray(file.length().toInt())
-        var iS: FileInputStream?
-
-        try {
-            iS = FileInputStream(file)
-            iS.read(byteData)
-            iS.close()
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        }
-
-        // Set and push to audio track
-        val intSize = AudioTrack.getMinBufferSize(
-            recorderSampleRate,
-            recorderChannelsOut,
-            recorderAudioEncoding
-        )
-
-        val at = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            recorderSampleRate,
-            recorderChannelsOut,
-            recorderAudioEncoding,
-            intSize,
-            AudioTrack.MODE_STREAM
-        )
-
-        if (at != null) {
-            at.play()
-            // Write the byte array to the track
-            at.write(byteData, 0, byteData.size)
-            at.stop()
-            at.release()
-        } else {
-            println("Audio track is not initialised ")
-        }
+    private suspend fun minEdits(vararg ints: Int): Int {
+        return Arrays.stream(ints).min().orElse(Int.MAX_VALUE)
     }
 
     @Throws(IOException::class)
@@ -100,6 +56,22 @@ object HelperUtils {
         return SpeechSettings.newBuilder()
             .setCredentialsProvider(credentialsProvider)
             .build()
+    }
+
+    fun hasMicrophone(context: Context): Boolean {
+        val pManager = context.packageManager
+        return pManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
+    }
+
+    fun checkPermissions(context: Context) {
+        Dexter.withContext(context)
+            .withPermissions(
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            .withListener(PermissionsListener(context))
+            .check()
     }
 
 }

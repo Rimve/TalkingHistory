@@ -1,4 +1,4 @@
-package com.neverim.talkinghistory.data
+package com.neverim.talkinghistory.data.models
 
 data class IDatabaseResponse (
     var data: Any? = null,

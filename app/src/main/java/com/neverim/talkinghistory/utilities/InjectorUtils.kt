@@ -1,6 +1,5 @@
 package com.neverim.talkinghistory.utilities
 
-import android.content.Context
 import com.neverim.talkinghistory.data.Database
 import com.neverim.talkinghistory.data.repositories.CharacterRepository
 import com.neverim.talkinghistory.data.repositories.RecognizerRepository
@@ -16,9 +15,9 @@ object InjectorUtils {
         return CharacterViewModelFactory(adjacenciesRepository)
     }
 
-    fun provideRecognizerViewModelFactory(context: Context): RecognizerViewModelFactory {
+    fun provideRecognizerViewModelFactory(): RecognizerViewModelFactory {
         val recognizerRepository = RecognizerRepository(Database.getInstance().recognizerDao)
-        return RecognizerViewModelFactory(recognizerRepository, context)
+        return RecognizerViewModelFactory(recognizerRepository)
     }
 
     fun provideStorageViewModelFactory(): StorageViewModelFactory {

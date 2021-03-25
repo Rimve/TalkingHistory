@@ -11,9 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.data.models.Edge
-import com.neverim.talkinghistory.data.models.FileLoc
-import com.neverim.talkinghistory.data.models.Vertex
+import com.neverim.talkinghistory.data.DatabaseCallback
+import com.neverim.talkinghistory.data.models.*
 import com.neverim.talkinghistory.data.models.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.ui.viewmodels.CharacterViewModel
 import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModel
@@ -37,14 +36,25 @@ class DialogueActivity : AppCompatActivity() {
 
     private val LOG_TAG = this.javaClass.simpleName
 
+    // View elements and models
     private lateinit var textView: TextView
     private lateinit var listView: ListView
     private lateinit var btnRestart: Button
-
     private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex
     private lateinit var mediaPlayer: MediaPlayer
 
+    // ViewModels
+    private lateinit var characterViewModel: CharacterViewModel
+    private lateinit var storageViewModel: StorageViewModel
+    private lateinit var recognizerViewModel: RecognizerViewModel
+
+    // ViewModel factories
+    private val characterFactory = InjectorUtils.provideCharacterViewModelFactory()
+    private val storageFactory = InjectorUtils.provideStorageViewModelFactory()
+    private val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory()
+
+    // Variables
     private var edgeArray = ArrayList<Edge>()
     private var fileList = ArrayList<FileLoc>()
     private var selectedChar: String? = null
@@ -61,6 +71,8 @@ class DialogueActivity : AppCompatActivity() {
 
         selectedChar = intent.getStringExtra("char")
 
+        HelperUtils.checkPermissions(this)
+
         initializeUi(selectedChar!!)
     }
 
@@ -71,66 +83,39 @@ class DialogueActivity : AppCompatActivity() {
 
     private fun initializeUi(charName: String) {
         Log.i(LOG_TAG, "initializing UI")
-        val characterFactory = InjectorUtils.provideCharacterViewModelFactory()
-        val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory(this)
-        val storageFactory = InjectorUtils.provideStorageViewModelFactory()
-        val characterViewModel = ViewModelProvider(this, characterFactory).get(CharacterViewModel::class.java)
-        val recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
-        val storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
+        characterViewModel = ViewModelProvider(this, characterFactory).get(CharacterViewModel::class.java)
+        recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
+        storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
 
-        characterViewModel.getAudioFileList().observe(this, Observer { fileList = it })
+        getAudioFileList(charName)
 
-        recognizerViewModel.audioSetup()
+        recognizerViewModel.audioSetup(this)
 
         characterViewModel.fetchCharDataFromDb(charName)
 
-        characterViewModel.getAdjacencies().observe(this, Observer { hashMap ->
-            if (hashMap.size > 0) {
-                currentQuestion = characterViewModel.retrieveFirst()!!
-                textView.text = currentQuestion.data
-                characterViewModel.edges(currentQuestion)
-                if (!spoke && this::currentQuestion.isInitialized) {
-                    getFileLocByVertex(currentQuestion)?.let { storageViewModel.fetchAudio(charName, it) } // Testing audio file
-                    spoke = true
-                }
-            }
-        })
-
-        characterViewModel.getEdges().observe(this, Observer {
-            edgeArray.clear()
-            edgeArray.addAll(it)
-            edgeAdapter.notifyDataSetChanged()
-        })
-
-        recognizerViewModel.getTranscript().observe(this, Observer {
-            answer = it
-        })
+        initiateObservers()
 
         edgeAdapter = EdgeArrayAdapter(this, edgeArray)
         listView.adapter = edgeAdapter
         edgeAdapter.notifyDataSetChanged()
         mediaPlayer = MediaPlayer()
 
-        storageViewModel.getAudio().observe(this, Observer {
-            if (it != null) {
-                playAudioFile(it)
-            }
-        })
-
-        //recognizerViewModel.startRecognition()
+        recognizerViewModel.startRecognition(this)
         CoroutineScope(Dispatchers.IO).launch {
             while (recognizerViewModel.isRecognizing()) {
                 if (answer != null) {
-                    val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                    val mostRelevantEdge = findEdgeWithLowestScore(answer!!
+                        .toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
                     if (mostRelevantEdge != null) {
                         Log.i(LOG_TAG, "found most suitable answer: $answer")
                         recognizerViewModel.stopRecognition()
-                        changeQuestion(mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
-                        getFileLocByVertex(currentQuestion)?.let { storageViewModel.fetchAudio(charName, it) }
+                        changeQuestion(mostRelevantEdge,
+                            characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                        playCurrentQuestion(charName)
                         characterViewModel.edges(currentQuestion)
                         answer = null
                         if (edgeArray.size != 1) {
-                            recognizerViewModel.startRecognition()
+                            recognizerViewModel.startRecognition(this@DialogueActivity)
                         }
                         else {
                             mediaPlayer.release()
@@ -180,12 +165,12 @@ class DialogueActivity : AppCompatActivity() {
         var lowestDst = Int.MAX_VALUE
         var mostRelevantEdge: Edge? = null
         if (transcript != null) {
-            edgeArray.forEach {
+            edgeArray.forEach { edge ->
                 val dst = HelperUtils.levDistance(transcript,
-                    it.destination.data.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                    edge.destination.data.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
                 if (lowestDst > dst) {
                     lowestDst = dst
-                    mostRelevantEdge = it
+                    mostRelevantEdge = edge
                 }
             }
         }
@@ -211,13 +196,46 @@ class DialogueActivity : AppCompatActivity() {
         }
     }
 
+    private fun getAudioFileList(charName: String) {
+        characterViewModel.getAudioFileList(object : DatabaseCallback {
+            override fun onResponse(response: IDatabaseResponse) {
+                if (response.data != null) {
+                    fileList = response.data as ArrayList<FileLoc>
+                    playCurrentQuestion(charName)
+                }
+            }
+        }, charName)
+    }
+
+    private fun initiateObservers() {
+        characterViewModel.getAdjacencies().observe(this, Observer { hashMap ->
+            if (hashMap.size > 0) {
+                currentQuestion = characterViewModel.retrieveFirst()!!
+                textView.text = currentQuestion.data
+                characterViewModel.edges(currentQuestion)
+            }
+        })
+
+        characterViewModel.getEdges().observe(this, Observer { listOfEdges ->
+            edgeArray.clear()
+            edgeArray.addAll(listOfEdges)
+            edgeAdapter.notifyDataSetChanged()
+        })
+
+        recognizerViewModel.getTranscript().observe(this, Observer { transcript ->
+            answer = transcript
+        })
+
+        storageViewModel.getAudio().observe(this, Observer { audioFile ->
+            if (audioFile != null) {
+                playAudioFile(audioFile)
+            }
+        })
+    }
+
     private fun playAudioFile(audioFile: File) {
         try {
             audioFile.deleteOnExit()
-
-            // Tried passing path directly, but kept getting
-            // "Prepare failed.: status=0x1"
-            // so using file descriptor instead
             val fis = FileInputStream(audioFile)
             mediaPlayer.setDataSource(fis.fd)
             mediaPlayer.prepare()
@@ -227,10 +245,14 @@ class DialogueActivity : AppCompatActivity() {
         }
     }
 
+    private fun playCurrentQuestion(charName: String) {
+        getFileLocByVertex(currentQuestion)?.let { fileLoc ->  storageViewModel.getAudioFile(charName, fileLoc) }
+    }
+
     private fun getFileLocByVertex(node: Vertex): FileLoc? {
-        fileList.forEach {
-            if (it.nodeId == node.index) {
-                return it
+        fileList.forEach { fileLoc ->
+            if (fileLoc.nodeId == node.index) {
+                return fileLoc
             }
         }
         return null
