@@ -193,13 +193,22 @@ class CharacterRepository private constructor(private val characterDao: Characte
         }
 
         if (dataSnapshot.value is ArrayList<*>) {
-            val adjacencies = dataSnapshot.value as ArrayList<ArrayList<String?>?>
+            val adjacencies = dataSnapshot.value as ArrayList<*>
             for (key in adjacencies.indices) {
                 if (adjacencies[key] != null) {
-                    val srcVertex = vertices[key.toString()]
-                    for (dstNode in adjacencies[key]!!) {
-                        if (dstNode != null) {
-                            val dstVertex = vertices[dstNode]
+                    if (adjacencies[key] is ArrayList<*>) {
+                        val srcVertex = vertices[key.toString()]
+                        for (dstNode in adjacencies[key]!! as ArrayList<String>) {
+                            if (dstNode != null) {
+                                val dstVertex = vertices[dstNode]
+                                addDirectedEdge(srcVertex!!, dstVertex!!)
+                            }
+                        }
+                    }
+                    if (adjacencies[key] is HashMap<*, *>) {
+                        val srcVertex = vertices[key.toString()]
+                        for ((key, value) in adjacencies[key]!! as HashMap<String, String>) {
+                            val dstVertex = vertices[value]
                             addDirectedEdge(srcVertex!!, dstVertex!!)
                         }
                     }

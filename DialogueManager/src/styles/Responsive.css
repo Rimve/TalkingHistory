@@ -41,14 +41,6 @@
     transform: translateY(2px);
 }
 
-.resbar {
-
-}
-
-.resbar-container {
-
-}
-
 .res-menu {
     position: absolute;
     right: 8px;
@@ -118,12 +110,6 @@
         .menu-icon-position {
             display: flex;
             align-self: center;
-        }
-
-        @media screen and (max-width: 600px) {
-            .search-bar {
-                display: none;
-            }
         }
 
         .ResbarItems {
@@ -204,6 +190,18 @@
             position: absolute;
             right: 0;
             padding: 2px;
+        }
+
+        @media screen and (max-width: 440px) {
+            .title {
+                font-size: x-large;
+            }
+
+            @media screen and (max-width: 342px) {
+                .title {
+                    font-size: large;
+                }
+            }
         }
     }
 }

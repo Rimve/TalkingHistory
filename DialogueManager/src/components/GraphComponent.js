@@ -4,14 +4,15 @@ import cytoscape from 'cytoscape';
 import cxtmenu from 'cytoscape-cxtmenu';
 import {withRouter} from "react-router-dom";
 import {
-    getTargetNodeOfIndex,
-    getNodeOfIdRef,
-    getCharAdjRef,
-    getCharNodeRef,
-    getDstNode, getCharQuestionsRef, getCharQuestionOfIdRef
+    getTargetNodeOfIndex, getNodeOfIdRef,
+    getCharAdjRef, getCharNodeRef,
+    getDstNode, getCharQuestionsRef,
+    getCharQuestionOfIdRef, getCharAudioStorageRef,
+    getCharAudioFileRef
 } from "../services/DatabaseService";
 import "firebase/database";
 import '../styles/CyStyle.css';
+import UploadModalComponent from "./UploadModalComponent";
 
 class GraphComponent extends React.Component{
 
@@ -23,32 +24,57 @@ class GraphComponent extends React.Component{
             edges: [],
             questionNodeIds: [],
             nodeToEdit: null,
+            nodeToAttachFileTo: null,
             nodeToConnectFrom: null,
             name: "",
             update: false,
-            showEdit: false
+            showEdit: false,
+            showUpload: false
         };
     }
 
-    showCallback = (data) => {
+    showEditCallback = (data) => {
         this.setState({showEdit: data});
+    };
+
+    showUploadCallback = (data) => {
+        this.setState({showUpload: data});
     };
 
     handleEdit = (node) => {
         const {name} = this.state;
         const {questionNodeIds} = this.state;
 
+        let questions = questionNodeIds;
+
         if (node.isQuestion) {
             this.setNodeAsQuestion(name, node);
-            questionNodeIds.push(Number(node.data.id));
+            questions.push(Number(node.data.id));
         }
         else {
             this.removeNodeAsQuestion(name, node);
-            questionNodeIds.pop(Number(node.data.id));
+            questions = questions.filter((item) => item !== node.data.id)
         }
 
         this.addNodeToDatabase(name, node.data);
-        this.setState({update: false});
+        this.setState({
+            update: false,
+            questionNodeIds: questions
+        });
+    };
+
+    handleUpload = (file) => {
+        const {name} = this.state;
+        const {nodeToAttachFileTo} = this.state;
+
+        if (file !== null) {
+            let fileName = file.name.split('.');
+            getCharAudioStorageRef(name, fileName[0]).put(file).then((snapshot) => {
+                getCharAudioFileRef(name, nodeToAttachFileTo.id).set(fileName[0]);
+            });
+        } else {
+            alert('File upload failed!')
+        }
     };
 
     renderCytoscapeElement() {
@@ -63,7 +89,7 @@ class GraphComponent extends React.Component{
             selector: 'node',
             commands: [
                 {
-                    fillColor: 'rgba(222,4,0,0.6)',
+                    fillColor: 'rgba(255,237,189,0.6)',
                     opacity: 0.1,
                     content: 'Remove',
                     contentStyle: {},
@@ -73,7 +99,7 @@ class GraphComponent extends React.Component{
                     enabled: true
                 },
                 {
-                    fillColor: 'rgba(222,4,0,0.6)',
+                    fillColor: 'rgba(255,237,189,0.6)',
                     content: 'Edit',
                     contentStyle: {},
                     select: (ele) => {
@@ -84,7 +110,7 @@ class GraphComponent extends React.Component{
                     enabled: true
                 },
                 {
-                    fillColor: 'rgba(222,4,0,0.6)',
+                    fillColor: 'rgba(255,237,189,0.6)',
                     content: 'Add',
                     contentStyle: {},
                     select: (ele) => {
@@ -93,7 +119,7 @@ class GraphComponent extends React.Component{
                     enabled: true
                 },
                 {
-                    fillColor: 'rgba(222,4,0,0.6)',
+                    fillColor: 'rgba(255,237,189,0.6)',
                     content: 'Connect to..',
                     contentStyle: {},
                     select: (ele) => {
@@ -105,11 +131,21 @@ class GraphComponent extends React.Component{
                         }
                     },
                     enabled: true
+                },
+                {
+                    fillColor: 'rgba(255,237,189,0.6)',
+                    content: true ? 'Upload' : 'Remove file',
+                    contentStyle: {},
+                    select: (ele) => {
+                        this.setState({nodeToAttachFileTo: ele.data()});
+                        this.setState({showUpload: true});
+                    },
+                    enabled: true
                 }
             ],
             fillColor: 'rgba(0, 0, 0, 0.75)',
-            activeFillColor: 'rgba(59,82,86,0.5)',
-            activePadding: 20,
+            activeFillColor: 'rgba(59,82,86,0.2)',
+            activePadding: 3,
             indicatorSize: 12,
             separatorWidth: 5,
             spotlightPadding: 5,
@@ -117,7 +153,7 @@ class GraphComponent extends React.Component{
             minSpotlightRadius: 24,
             maxSpotlightRadius: 38,
             openMenuEvents: 'cxttapstart taphold',
-            itemColor: 'white',
+            itemColor: '#8facbf',
             itemTextShadowColor: 'transparent',
             zIndex: 9999,
             atMouse: false,
@@ -169,9 +205,9 @@ class GraphComponent extends React.Component{
                     .css({
                         'height': 'label',
                         'width': 'label',
-                        'background-color' : '#ffc0b2',
+                        'background-color' : '#8facbf',
                         'background-fit': 'cover',
-                        'border-color': '#7a070c',
+                        'border-color': '#ffedbd',
                         'border-width': 2,
                         'border-opacity': 0.5,
                         'content': 'data(name)',
@@ -187,8 +223,8 @@ class GraphComponent extends React.Component{
                     .css({
                         'width': 6,
                         'target-arrow-shape': 'triangle',
-                        'line-color': '#de0e00',
-                        'target-arrow-color': '#de0e00',
+                        'line-color': '#8facbf',
+                        'target-arrow-color': '#8facbf',
                         'overlay-opacity': 0,
                         'curve-style': 'bezier'
                     })
@@ -222,7 +258,9 @@ class GraphComponent extends React.Component{
         });
 
         for (let index in questionNodeIds) {
-            cy.getElementById(questionNodeIds[index]).style('background-color', '#bbf3ff');
+            cy.getElementById(questionNodeIds[index])
+                .style('background-color', '#ffedbd')
+                .style('border-color', '#8facbf');
         }
     }
 
@@ -306,8 +344,9 @@ class GraphComponent extends React.Component{
         };
         nodes.push(newNode);
 
-        this.setState({nodeToEdit: newNode});
-        this.setState({showEdit: true});
+        this.setState({nodeToEdit: newNode}, () => {
+            this.setState({showEdit: true});
+        });
 
         let fromNodeId = nodes[nodes.indexOf(nodeToFind)].data;
         let toNodeId = nodes[nodes.indexOf(newNode)].data;
@@ -471,10 +510,22 @@ class GraphComponent extends React.Component{
         return (
             this.state.showEdit ?
                 <EditModalComponent
-                    showCallBack={this.showCallback}
+                    showCallBack={this.showEditCallback}
                     editCallBack={this.handleEdit}
                     show={this.state.showEdit}
                     node={this.state.nodeToEdit}
+                /> : null
+        )
+    }
+
+    uploadComponent() {
+        return (
+            this.state.showUpload ?
+                <UploadModalComponent
+                    showUploadCallBack={this.showUploadCallback}
+                    uploadCallBack={this.handleUpload}
+                    show={this.state.showUpload}
+                    type='audio'
                 /> : null
         )
     }
@@ -498,8 +549,16 @@ class GraphComponent extends React.Component{
 
     render() {
         return (
-            <div className="graph-container" id="cy">
+            <div className="graph-container"
+                 id="cy"
+                 onContextMenu={
+                     (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                     }
+                 }>
                 {this.modalComponent()}
+                {this.uploadComponent()}
             </div>
         );
     }

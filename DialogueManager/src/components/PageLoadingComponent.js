@@ -1,7 +1,7 @@
 import React, {Component} from "react";
-import '../styles/Loader.css';
+import '../styles/LoaderPage.css';
 
-export default class LoadingComponent extends Component {
+export default class PageLoadingComponent extends Component {
     render() {
         return (
             <>

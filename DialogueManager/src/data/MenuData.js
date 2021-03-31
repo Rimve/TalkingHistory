@@ -7,7 +7,7 @@ import {logoutUser} from "../services/DatabaseService";
 export const MenuData = [
     {
         title: 'Database',
-        path: '/selector',
+        path: '/management',
         icon: <FaIcons.FaDatabase />,
         onClick: () => temp()
     },

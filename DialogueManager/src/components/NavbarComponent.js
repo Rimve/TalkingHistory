@@ -5,7 +5,7 @@ import "firebase/database";
 import '../styles/Navbar.css';
 import '../styles/App.css';
 import '../styles/Responsive.css';
-import '../styles/Loader.css';
+import '../styles/LoaderPage.css';
 import {MenuData} from '../data/MenuData';
 
 function NavbarComponent({authStatus}) {

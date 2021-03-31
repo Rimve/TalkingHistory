@@ -5,8 +5,26 @@
 }
 
 .footer-relative {
-    padding: 20px;
+    padding: 10px;
     background-color: var(--main-color);
-    border-top: 2px solid var(--accent-color);
     z-index: 2;
+}
+
+@media screen and (max-width: 465px) {
+    .footer-relative {
+        font-size: small;
+        padding: 12.5px;
+    }
+    @media screen and (max-width: 394px) {
+        .footer-relative {
+            font-size: 10px;
+            padding: 14.5px;
+        }
+        @media screen and (max-width: 319px) {
+            .footer-relative {
+                font-size: 8px;
+                padding: 16px;
+            }
+        }
+    }
 }

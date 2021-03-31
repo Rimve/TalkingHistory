@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-import SelectorComponent from "../components/SelectorComponent";
+import ManagementComponent from "../components/ManagementComponent";
 
-export default class Selector extends Component {
+export default class Management extends Component {
     constructor(props) {
         super(props);
     }
@@ -9,7 +9,7 @@ export default class Selector extends Component {
     render() {
         return (
             <>
-                <SelectorComponent />
+                <ManagementComponent />
             </>
         );
     }

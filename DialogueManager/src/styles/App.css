@@ -1,12 +1,11 @@
 .App {
-    background: rgb(255,255,255);
-    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(222,89,1,1) 100%);
+    background: var(--accent-color);
 }
 
 :root {
-    --main-color: #3b5256;
-    --accent-color: #de9b27;
-    --select-color: #ffcc94;
+    --main-color: #8FACBF;
+    --accent-color: #ffffff;
+    --select-color: #F2E6D7;
 }
 
 .margin-none {
@@ -110,7 +109,7 @@
 }
 
 .body {
-    min-height: calc(100vh - 126px);
+    min-height: calc(100vh - 104px);
     display: flex;
     justify-content: center;
     align-items: center;
