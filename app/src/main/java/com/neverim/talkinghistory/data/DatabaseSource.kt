@@ -23,4 +23,6 @@ class DatabaseSource {
 
     fun getFilesLocRef() = getFirebaseRef().getReference("files")
 
+    fun getSimilaritiesRef() = getFirebaseRef().getReference("similarities")
+
 }

@@ -30,6 +30,7 @@ import java.io.IOException
 import java.util.*
 import javax.net.ssl.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 class DialogueActivity : AppCompatActivity() {
@@ -54,12 +55,14 @@ class DialogueActivity : AppCompatActivity() {
     private val storageFactory = InjectorUtils.provideStorageViewModelFactory()
     private val recognizerFactory = InjectorUtils.provideRecognizerViewModelFactory()
 
-    // Variables
+    // Variables / values
+    private var similaritiesMap = HashMap<String, ArrayList<String>>()
     private var edgeArray = ArrayList<Edge>()
     private var fileList = ArrayList<FileLoc>()
     private var selectedChar: String? = null
     private var answer: String? = null
     private var spoke = false
+    private val locale = Locale.forLanguageTag(Constants.LANGUAGE_CODEC)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +91,7 @@ class DialogueActivity : AppCompatActivity() {
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
 
         getAudioFileList(charName)
+        getWordSimilarities()
 
         recognizerViewModel.audioSetup(this)
 
@@ -100,25 +104,31 @@ class DialogueActivity : AppCompatActivity() {
         edgeAdapter.notifyDataSetChanged()
         mediaPlayer = MediaPlayer()
 
-        //recognizerViewModel.startRecognition(this)
+        recognizerViewModel.startRecognition(this)
         CoroutineScope(Dispatchers.IO).launch {
             while (recognizerViewModel.isRecognizing()) {
                 if (answer != null) {
-                    val mostRelevantEdge = findEdgeWithLowestScore(answer!!
-                        .toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
+                    // Finding the most relevant edge according to the answer using Levenshtein distance
+                    val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(locale))
                     if (mostRelevantEdge != null) {
                         Log.i(LOG_TAG, "found most suitable answer: $answer")
+                        // Stop recognition after answer to bypass 1 minute stream limit
                         recognizerViewModel.stopRecognition()
-                        changeQuestion(mostRelevantEdge,
-                            characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                        // Change dialogue entry according to the most relevant answer
+                        changeQuestion(mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+                        // Play the audio file attached to this question
                         playCurrentQuestion(charName)
+                        // Change the edges according to the question so the observer would update UI
                         characterViewModel.edges(currentQuestion)
                         answer = null
-                        if (edgeArray.size != 1) {
-                            recognizerViewModel.startRecognition(this@DialogueActivity)
-                        }
-                        else {
+                        // If there are no more edges - the dialogue is over
+                        if (edgeArray.size == 0) {
+                            Log.e(LOG_TAG, "stopping recognition")
                             mediaPlayer.release()
+                        }
+                        // Otherwise start the recognition again (bypassing 1 minute limit)
+                        else {
+                            recognizerViewModel.startRecognition(this@DialogueActivity)
                         }
                     }
                 }
@@ -162,20 +172,30 @@ class DialogueActivity : AppCompatActivity() {
 
     private suspend fun findEdgeWithLowestScore(transcript: String?): Edge? {
         Log.i(LOG_TAG, "calculating distance")
-        var lowestDst = Int.MAX_VALUE
-        var mostRelevantEdge: Edge? = null
+        // Find what was the answer
+        val possibleAnswer = transcript?.let { getSimilaritiesOfWord(it) }
         if (transcript != null) {
+            // Check if any of the question edges has this or very similar answer
             edgeArray.forEach { edge ->
-                val dst = HelperUtils.levDistance(transcript,
-                    edge.destination.data.toLowerCase(Locale.forLanguageTag(Constants.LANGUAGE_CODEC)))
-                if (lowestDst > dst) {
-                    lowestDst = dst
-                    mostRelevantEdge = edge
+                // If answer can be any word then we do not need to search further
+                if (edge.destination.data.toLowerCase(locale) == Constants.WORD_ANY) {
+                    answer = null
+                    return edge
+                }
+                if (possibleAnswer != null && edge.destination.data.toLowerCase(locale) == possibleAnswer) {
+                    // Return the most relevant edge and reset the answer
+                    answer = null
+                    return edge
                 }
             }
         }
+        // Otherwise no similar answer was found - user must repeat
+        else {
+            answer = null
+            return null
+        }
         answer = null
-        return mostRelevantEdge
+        return null
     }
 
     private suspend fun changeEdges(dstNodeEdges: ArrayList<Edge>, srcEdge: Edge): Vertex? {
@@ -201,7 +221,6 @@ class DialogueActivity : AppCompatActivity() {
             override fun onResponse(response: IDatabaseResponse) {
                 if (response.data != null) {
                     fileList = response.data as ArrayList<FileLoc>
-                    playCurrentQuestion(charName)
                 }
             }
         }, charName)
@@ -256,6 +275,41 @@ class DialogueActivity : AppCompatActivity() {
             }
         }
         return null
+    }
+
+    private fun getWordSimilarities() {
+        Log.i(LOG_TAG, "getting similar words HashMap")
+        characterViewModel.getSimilarities(object : DatabaseCallback {
+            override fun onResponse(response: IDatabaseResponse) {
+                if (response.data != null) {
+                    similaritiesMap = response.data as HashMap<String, ArrayList<String>>
+                }
+            }
+        })
+    }
+
+    private suspend fun getSimilaritiesOfWord(word: String): String? {
+
+        var lowestDst = Constants.MAXIMUM_LEV_DISTANCE
+        var possibleAnswer: String? = null
+
+        similaritiesMap.forEach { (keyWord, similarities) ->
+            similarities.forEach { similarWord ->
+                // Calculate the minimum distance between words
+                val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
+                // If we found lower scored word - it will be our answer
+                if (lowestDst > dst) {
+                    lowestDst = dst
+                    possibleAnswer = keyWord.toLowerCase(locale)
+                }
+                // If that word is not positive answer nor is negative
+                // then we assume it might be a specific word if it is of sufficient distance score
+                if (keyWord == Constants.WORD_OTHER && dst < Constants.MAXIMUM_LEV_DISTANCE) {
+                    possibleAnswer = similarWord.toLowerCase(locale)
+                }
+            }
+        }
+        return possibleAnswer
     }
 
 }

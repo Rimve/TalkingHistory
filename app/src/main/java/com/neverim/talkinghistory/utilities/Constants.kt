@@ -10,4 +10,7 @@ object Constants {
     const val RECORDER_CHANNELS_OUT = AudioFormat.CHANNEL_OUT_MONO
     const val LANGUAGE_CODEC = "lt-LT"
     const val BACK_TIME_INTERVAL = 2000
+    const val MAXIMUM_LEV_DISTANCE = 5
+    const val WORD_ANY = "..."
+    const val WORD_OTHER = "Kiti"
 }

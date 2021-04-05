@@ -18,6 +18,7 @@ class CharacterDao {
     private val charList = ArrayList<String>()
     private val edges = ArrayList<Edge>()
     private val question = ArrayList<Vertex>()
+    private var similarities = HashMap<String, ArrayList<String>>()
     private var first: Vertex? = null
 
     private val mutableAdjacenciesList = MutableLiveData<HashMap<Vertex, ArrayList<Edge>>>()
@@ -37,6 +38,10 @@ class CharacterDao {
 
     fun addFile(nodeId: Int, charName: String, fileName: String) {
         filesList.add(FileLoc(nodeId, charName, fileName))
+    }
+
+    fun addSimilarities(sims: HashMap<String, ArrayList<String>>) {
+        similarities = sims
     }
 
     fun createVertex(index: Int, data: String): Vertex {
@@ -87,5 +92,6 @@ class CharacterDao {
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
     fun getAudioFileList() = filesList
     fun getCharList() = charList
+    fun getSimilarities() = similarities
 
 }

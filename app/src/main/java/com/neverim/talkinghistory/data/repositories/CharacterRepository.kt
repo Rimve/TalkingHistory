@@ -51,6 +51,7 @@ class CharacterRepository private constructor(private val characterDao: Characte
         databaseHelper.getNodesRef().keepSynced(true)
         databaseHelper.getAdjacencyRef().keepSynced(true)
         databaseHelper.getFilesLocRef().keepSynced(true)
+        databaseHelper.getSimilaritiesRef().keepSynced(true)
         getNodes(charName)
         getAdjacencies(charName)
     }
@@ -69,6 +70,37 @@ class CharacterRepository private constructor(private val characterDao: Characte
                 }
             }
             else {
+                Log.e(LOG_TAG, task.exception.toString())
+                response.exception = task.exception
+            }
+            callback.onResponse(response)
+        }
+    }
+
+    fun getDescription(callback: DatabaseCallback, charName: String) {
+        databaseHelper.getFilesLocRef().child(charName).child("description").get().addOnCompleteListener { task ->
+            Log.i(LOG_TAG, "getting description for '$charName'")
+            val response = IDatabaseResponse()
+            if (task.isSuccessful) {
+                val result = task.result
+                result?.value?.let { response.data = result.value as String }
+            }
+            else {
+                Log.e(LOG_TAG, task.toString())
+                response.exception = task.exception
+            }
+            callback.onResponse(response)
+        }
+    }
+
+    fun getSimilarities(callback: DatabaseCallback) {
+        databaseHelper.getSimilaritiesRef().get().addOnCompleteListener { task ->
+            Log.i(LOG_TAG, "getting word similarities")
+            val response = IDatabaseResponse()
+            if (task.isSuccessful) {
+                val result = task.result
+                result?.value?.let { response.data = result.value as HashMap<String, ArrayList<String>> }
+            } else {
                 Log.e(LOG_TAG, task.exception.toString())
                 response.exception = task.exception
             }
@@ -111,18 +143,6 @@ class CharacterRepository private constructor(private val characterDao: Characte
         }
     }
 
-    private fun getNodes(charName: String) {
-        databaseHelper.getNodesRef().child(charName).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                getNodesFromDatabase(dataSnapshot)
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(LOG_TAG, "nodesListener load:onCancelled", databaseError.toException())
-            }
-        })
-    }
-
     private fun getAdjacencies(charName: String) {
         databaseHelper.getAdjacencyRef().child(charName).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -131,6 +151,18 @@ class CharacterRepository private constructor(private val characterDao: Characte
 
             override fun onCancelled(databaseError: DatabaseError) {
                 Log.w(LOG_TAG, "adjacenciesListener load:onCancelled", databaseError.toException())
+            }
+        })
+    }
+
+    private fun getNodes(charName: String) {
+        databaseHelper.getNodesRef().child(charName).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                getNodesFromDatabase(dataSnapshot)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(LOG_TAG, "nodesListener load:onCancelled", databaseError.toException())
             }
         })
     }

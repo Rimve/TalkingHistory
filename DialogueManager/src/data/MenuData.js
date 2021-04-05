@@ -6,14 +6,14 @@ import {logoutUser} from "../services/DatabaseService";
 
 export const MenuData = [
     {
-        title: 'Database',
+        title: 'Characters',
         path: '/management',
         icon: <FaIcons.FaDatabase />,
         onClick: () => temp()
     },
     {
-        title: 'Profile',
-        path: '/profile',
+        title: 'Users',
+        path: '/users',
         icon: <FaIcons.FaUserCircle />,
         onClick: () => temp()
     },

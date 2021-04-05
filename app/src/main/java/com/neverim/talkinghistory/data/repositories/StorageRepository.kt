@@ -29,22 +29,24 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
         }
     }
 
-    fun getImageFile(callback: DatabaseCallback, charName: String, fileName: String) {
-        val localFile = File.createTempFile(fileName, ".jpg")
-        val downloadTask = storageHelper.imageStorageRef(charName).child("$fileName.jpg").getFile(
-            localFile
-        )
-        downloadTask.addOnCompleteListener { task ->
-            Log.i(LOG_TAG, "image download task completed")
-            val response = IDatabaseResponse()
-            if (task.isSuccessful) {
-                response.data = BitmapFactory.decodeFile(localFile.path)
+    fun getImageFile(callback: DatabaseCallback, charName: String, fileName: String?) {
+        if (fileName != null) {
+            val localFile = File.createTempFile(fileName, ".jpg")
+            val downloadTask =
+                storageHelper.imageStorageRef(charName).child("$fileName.jpg").getFile(
+                    localFile
+                )
+            downloadTask.addOnCompleteListener { task ->
+                Log.i(LOG_TAG, "image download task completed")
+                val response = IDatabaseResponse()
+                if (task.isSuccessful) {
+                    response.data = BitmapFactory.decodeFile(localFile.path)
+                } else {
+                    Log.e(LOG_TAG, task.exception.toString())
+                    response.exception = task.exception
+                }
+                callback.onResponse(response)
             }
-            else {
-                Log.e(LOG_TAG, task.exception.toString())
-                response.exception = task.exception
-            }
-            callback.onResponse(response)
         }
     }
 

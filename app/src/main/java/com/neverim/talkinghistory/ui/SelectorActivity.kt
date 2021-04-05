@@ -5,14 +5,15 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.data.DatabaseCallback
-import com.neverim.talkinghistory.data.models.IDatabaseResponse
 import com.neverim.talkinghistory.data.models.CharacterInfo
-import com.neverim.talkinghistory.data.models.adapters.RecyclerAdapter
+import com.neverim.talkinghistory.data.models.IDatabaseResponse
+import com.neverim.talkinghistory.data.models.adapters.CharRecyclerAdapter
 import com.neverim.talkinghistory.ui.viewmodels.CharacterViewModel
 import com.neverim.talkinghistory.ui.viewmodels.StorageViewModel
 import com.neverim.talkinghistory.utilities.Constants
@@ -21,6 +22,7 @@ import com.neverim.talkinghistory.utilities.InjectorUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 
 class SelectorActivity : AppCompatActivity() {
@@ -29,7 +31,7 @@ class SelectorActivity : AppCompatActivity() {
 
     // View elements and adapters
     private lateinit var recycler: RecyclerView
-    private lateinit var recyclerAdapter: RecyclerAdapter
+    private lateinit var recyclerAdapter: CharRecyclerAdapter
 
     // ViewModels
     private lateinit var characterViewModel: CharacterViewModel
@@ -40,6 +42,7 @@ class SelectorActivity : AppCompatActivity() {
     private val storageFactory = InjectorUtils.provideStorageViewModelFactory()
 
     // Variables
+    private lateinit var brokenImage: Bitmap
     private var charsArray: ArrayList<String> = ArrayList()
     private var charInfoList: ArrayList<CharacterInfo> = ArrayList()
     private var backPressed: Long = 0
@@ -52,7 +55,7 @@ class SelectorActivity : AppCompatActivity() {
 
         characterViewModel = ViewModelProvider(this, characterFactory).get(CharacterViewModel::class.java)
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
-        recyclerAdapter = RecyclerAdapter(charInfoList)
+        recyclerAdapter = CharRecyclerAdapter(charInfoList)
 
         Log.i(LOG_TAG, "asking for permissions")
 
@@ -78,6 +81,9 @@ class SelectorActivity : AppCompatActivity() {
         characterViewModel.clear()
 
         CoroutineScope(Dispatchers.IO).launch {
+            ResourcesCompat.getDrawable(this@SelectorActivity.resources, R.drawable.ic_broken_image, theme)?.let {
+                brokenImage = HelperUtils.drawableToBitmap(it)!!
+            }
             getCharacterInfoList()
         }
     }
@@ -88,34 +94,37 @@ class SelectorActivity : AppCompatActivity() {
                 if (response.data != null) {
                     charsArray.addAll(response.data as ArrayList<String>)
                     charsArray.forEach { charName ->
-                        getImageFileNameOfChar(charName)
+                        getDescription(charName)
                     }
                 }
             }
         })
     }
 
-    private fun getImageFileNameOfChar(charName: String) {
-        characterViewModel.getImageFileName(object : DatabaseCallback {
+    private fun getDescription(charName: String) {
+        characterViewModel.getDescription(object : DatabaseCallback {
             override fun onResponse(response: IDatabaseResponse) {
-                if (response.data != null) {
-                    getImageFile(charName, response.data as String)
-                }
+                val desc = response.data as String?
+                characterViewModel.getImageFileName(object : DatabaseCallback {
+                    override fun onResponse(response: IDatabaseResponse) {
+                        val imageFileName = response.data.toString()
+                        createCharEntry(charName, imageFileName, desc)
+                    }
+                }, charName)
             }
         }, charName)
     }
 
-    private fun getImageFile(charName: String, fileName: String) {
+    private fun createCharEntry(charName: String, imageFileName: String?, desc: String?) {
         storageViewModel.getImageFile(object : DatabaseCallback {
             override fun onResponse(response: IDatabaseResponse) {
-                charInfoList.add(CharacterInfo(response.data as Bitmap?, charName))
+                if (response.exception is Exception)
+                    charInfoList.add(CharacterInfo(brokenImage, charName, desc))
+                else
+                    charInfoList.add(CharacterInfo(response.data as Bitmap?, charName, desc))
                 recyclerAdapter.notifyDataSetChanged()
-//                if (response.data != null) {
-//                    charInfoList.add(CharacterInfo(response.data as File, charName))
-//                    recyclerAdapter.notifyDataSetChanged()
-//                }
             }
-        }, charName, fileName)
+        }, charName, imageFileName)
     }
 
 }

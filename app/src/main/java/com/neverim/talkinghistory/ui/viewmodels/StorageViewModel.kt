@@ -11,6 +11,6 @@ class StorageViewModel(private val storageRepository: StorageRepository): ViewMo
     fun getAudio() = storageRepository.getAudio()
     fun getAudioFile(charName: String, fileNode: FileLoc) =
         storageRepository.fetchAudioFile(charName, fileNode)
-    fun getImageFile(callback: DatabaseCallback, charName: String, fileName: String) =
+    fun getImageFile(callback: DatabaseCallback, charName: String, fileName: String?) =
         storageRepository.getImageFile(callback, charName, fileName)
 }

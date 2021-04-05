@@ -10,8 +10,8 @@ import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.data.models.CharacterInfo
 import com.neverim.talkinghistory.ui.DialogueActivity
 
-class RecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
-    RecyclerView.Adapter<RecyclerAdapter.ItemViewHolder>() {
+class CharRecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
+    RecyclerView.Adapter<CharRecyclerAdapter.ItemViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         // Inflate the item Layout
@@ -37,6 +37,14 @@ class RecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
             holder.charProgressBar.visibility = View.VISIBLE
             holder.charImageView.visibility = View.INVISIBLE
         }
+
+        if (charInfoList[position].charDesc == "" || charInfoList[position].charDesc == null) {
+            holder.charDescTextView.visibility = View.INVISIBLE
+        }
+        else {
+            holder.charDescTextView.text = charInfoList[position].charDesc
+        }
+
         holder.charNameTextView.text = charInfoList[position].charName
         holder.charImageView.setOnClickListener {
             val context = holder.charImageView.context
@@ -44,7 +52,6 @@ class RecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
             dialogueIntent.putExtra("char", charInfoList[position].charName)
             context.startActivity(dialogueIntent)
         }
-        //holder.charDescTextView.text = charInfoList[position].charDesc
     }
 
     override fun getItemCount(): Int {
@@ -61,7 +68,7 @@ class RecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
         // Init the item view's
         var charImageView: ImageView = itemView.findViewById(R.id.iv_char_image)
         var charNameTextView: TextView = itemView.findViewById(R.id.tv_char_name)
-        //var charDescTextView:TextView = itemView.findViewById(R.id.tv_char_desc)
+        var charDescTextView:TextView = itemView.findViewById(R.id.tv_char_desc)
         var charProgressBar: ProgressBar = itemView.findViewById(R.id.pb_recycler_picture)
     }
 }

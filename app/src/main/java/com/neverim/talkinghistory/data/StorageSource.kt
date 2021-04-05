@@ -22,5 +22,4 @@ class StorageSource {
 
     fun audioStorageRef(charName: String) = getStorageRef().child("$charName/audio/")
 
-
 }

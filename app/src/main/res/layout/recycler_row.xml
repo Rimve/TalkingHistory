@@ -55,9 +55,6 @@
 
         <TextView
             android:id="@+id/tv_char_desc"
-            android:text="This history person had so much time during the 15th century.
- He travelled through the space and time continuum and has
- reached incredible achievements."
             android:background="@drawable/round_outline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
