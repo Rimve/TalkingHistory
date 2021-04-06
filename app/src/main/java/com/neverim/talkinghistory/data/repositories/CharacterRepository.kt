@@ -7,6 +7,7 @@ import com.neverim.talkinghistory.data.daos.CharacterDao
 import com.neverim.talkinghistory.data.DatabaseSource
 import com.neverim.talkinghistory.data.models.IDatabaseResponse
 import com.neverim.talkinghistory.data.models.Vertex
+import com.neverim.talkinghistory.utilities.Constants
 
 
 class CharacterRepository private constructor(private val characterDao: CharacterDao) {
@@ -54,6 +55,36 @@ class CharacterRepository private constructor(private val characterDao: Characte
         databaseHelper.getSimilaritiesRef().keepSynced(true)
         getNodes(charName)
         getAdjacencies(charName)
+    }
+
+    // Uncategorized word insertion
+    fun insertUncategorizedWord(charName: String, node: Vertex, word: String) {
+        var index = 0
+        databaseHelper.getUndefinedRef()
+            .child(charName)
+            .child(node.index.toString()).get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    if (task.result?.value != null) {
+                        val amountOfUncats = task.result?.value as ArrayList<*>
+                        index = amountOfUncats.size
+                    }
+                    databaseHelper.getUndefinedRef()
+                        .child(charName)
+                        .child(node.index.toString())
+                        .child(index.toString())
+                        .setValue(word)
+                        .addOnCompleteListener { uncatTask ->
+                            Log.i(LOG_TAG, "adding uncategorized word to database")
+                            if (uncatTask.isSuccessful) {
+                                Log.i(LOG_TAG, "added uncategorized word to database")
+                            } else {
+                                Log.e(LOG_TAG, uncatTask.exception.toString())
+                            }
+                        }
+                } else {
+                    Log.e(LOG_TAG, task.exception.toString())
+                }
+            }
     }
 
     fun fetchCharListFromDb(callback: DatabaseCallback) {
@@ -192,8 +223,7 @@ class CharacterRepository private constructor(private val characterDao: Characte
             val nodes = snapshot.value as ArrayList<String?>
             nodes.forEachIndexed { index, data ->
                 if (data != null) {
-                    vertices[index.toString()] =
-                        createVertex(index, data)
+                    vertices[index.toString()] = createVertex(index, data)
                 }
             }
         }

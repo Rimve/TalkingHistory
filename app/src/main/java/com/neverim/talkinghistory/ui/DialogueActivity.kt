@@ -3,10 +3,10 @@ package com.neverim.talkinghistory.ui
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.ListView
-import android.widget.TextView
-import android.widget.Toast
+import android.view.animation.Animation
+import android.view.animation.AnimationSet
+import android.view.animation.AnimationUtils
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -39,8 +39,7 @@ class DialogueActivity : AppCompatActivity() {
 
     // View elements and models
     private lateinit var textView: TextView
-    private lateinit var listView: ListView
-    private lateinit var btnRestart: Button
+    private lateinit var listeningCircle: ImageView
     private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex
     private lateinit var mediaPlayer: MediaPlayer
@@ -63,20 +62,24 @@ class DialogueActivity : AppCompatActivity() {
     private var answer: String? = null
     private var spoke = false
     private val locale = Locale.forLanguageTag(Constants.LANGUAGE_CODEC)
+    private val animationSet = AnimationSet(false)
+    private lateinit var scaleDown: Animation
+    private lateinit var scaleIn: Animation
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dialogue)
 
-        textView = findViewById(R.id.tv_dialogue_question)
-        listView = findViewById(R.id.lv_dialogue_choices)
-        btnRestart = findViewById(R.id.btn_dialogue_restart)
+        textView = findViewById(R.id.tv_dial_question)
+        listeningCircle = findViewById(R.id.iv_dial_listening_circle)
 
         selectedChar = intent.getStringExtra("char")
 
         HelperUtils.checkPermissions(this)
 
-        initializeUi(selectedChar!!)
+        if (selectedChar != null) {
+            initializeUi(selectedChar!!)
+        }
     }
 
     override fun onDestroy() {
@@ -90,6 +93,7 @@ class DialogueActivity : AppCompatActivity() {
         recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
 
+        initializeAnimations()
         getAudioFileList(charName)
         getWordSimilarities()
 
@@ -100,9 +104,12 @@ class DialogueActivity : AppCompatActivity() {
         initiateObservers()
 
         edgeAdapter = EdgeArrayAdapter(this, edgeArray)
-        listView.adapter = edgeAdapter
         edgeAdapter.notifyDataSetChanged()
         mediaPlayer = MediaPlayer()
+
+        CoroutineScope(Dispatchers.Default).launch {
+            circleScaleDown()
+        }
 
         recognizerViewModel.startRecognition(this)
         CoroutineScope(Dispatchers.IO).launch {
@@ -133,28 +140,6 @@ class DialogueActivity : AppCompatActivity() {
                     }
                 }
             }
-        }
-
-        listView.setOnItemClickListener { parent, view, position, id ->
-            val edges = characterViewModel.edgesWithoutUiUpdate(currentQuestion)
-            val element: Edge = listView.adapter?.getItem(position) as Edge
-
-            for (edge in edges) {
-                if (edge.destination.data == element.destination.data) {
-                    val dstVertexEdges = characterViewModel.edgesWithoutUiUpdate(edge.destination)
-                    for (dstEdge in dstVertexEdges) {
-                        if (edge.source.data == textView.text) {
-                            textView.text = dstEdge.destination.data
-                            currentQuestion = dstEdge.destination
-                            characterViewModel.edges(currentQuestion)
-                        }
-                    }
-                }
-            }
-        }
-
-        btnRestart.setOnClickListener {
-            initializeUi(selectedChar!!)
         }
     }
 
@@ -188,6 +173,7 @@ class DialogueActivity : AppCompatActivity() {
                     return edge
                 }
             }
+            characterViewModel.insertUncategorizedWord(selectedChar!!, currentQuestion, transcript)
         }
         // Otherwise no similar answer was found - user must repeat
         else {
@@ -294,22 +280,41 @@ class DialogueActivity : AppCompatActivity() {
         var possibleAnswer: String? = null
 
         similaritiesMap.forEach { (keyWord, similarities) ->
-            similarities.forEach { similarWord ->
-                // Calculate the minimum distance between words
-                val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
-                // If we found lower scored word - it will be our answer
-                if (lowestDst > dst) {
-                    lowestDst = dst
-                    possibleAnswer = keyWord.toLowerCase(locale)
-                }
-                // If that word is not positive answer nor is negative
-                // then we assume it might be a specific word if it is of sufficient distance score
-                if (keyWord == Constants.WORD_OTHER && dst < Constants.MAXIMUM_LEV_DISTANCE) {
-                    possibleAnswer = similarWord.toLowerCase(locale)
+            if (similarities is ArrayList<*>) {
+                similarities.forEach { similarWord ->
+                    // Calculate the minimum distance between words
+                    val dst = HelperUtils.levDistance(
+                        similarWord.toLowerCase(locale),
+                        word.toLowerCase(locale)
+                    )
+                    // If we found lower scored word - it will be our answer
+                    if (lowestDst > dst) {
+                        lowestDst = dst
+                        possibleAnswer = keyWord.toLowerCase(locale)
+                    }
+                    // If that word is not positive answer nor is negative
+                    // then we assume it might be a specific word if it is of sufficient distance score
+                    if (keyWord == Constants.WORD_OTHER && dst < Constants.MAXIMUM_LEV_DISTANCE) {
+                        possibleAnswer = similarWord.toLowerCase(locale)
+                    }
                 }
             }
         }
         return possibleAnswer
+    }
+
+    private fun initializeAnimations() {
+        scaleDown = AnimationUtils.loadAnimation(this, R.anim.scale_down)
+        scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in)
+
+        animationSet.addAnimation(scaleIn)
+        animationSet.addAnimation(scaleDown)
+    }
+
+    private suspend fun circleScaleDown() {
+        withContext(Dispatchers.Default) {
+            listeningCircle.startAnimation(animationSet)
+        }
     }
 
 }

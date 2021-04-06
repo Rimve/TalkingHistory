@@ -25,4 +25,6 @@ class DatabaseSource {
 
     fun getSimilaritiesRef() = getFirebaseRef().getReference("similarities")
 
+    fun getUndefinedRef() = getFirebaseRef().getReference("undefined")
+
 }

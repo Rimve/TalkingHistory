@@ -13,4 +13,5 @@ object Constants {
     const val MAXIMUM_LEV_DISTANCE = 5
     const val WORD_ANY = "..."
     const val WORD_OTHER = "Kiti"
+    const val WORD_UNCATEGORIZED = "Nekategorizuoti"
 }

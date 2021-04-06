@@ -16,6 +16,7 @@ class CharacterViewModel(private val characterRepository: CharacterRepository) :
     fun getDescription(callback: DatabaseCallback, charName: String) = characterRepository.getDescription(callback, charName)
     fun getSimilarities(callback: DatabaseCallback) = characterRepository.getSimilarities(callback)
     fun fetchCharDataFromDb(charName: String) = characterRepository.fetchCharDataFromDb(charName)
+    fun insertUncategorizedWord(charName: String, node: Vertex, word: String) = characterRepository.insertUncategorizedWord(charName, node, word)
     fun fetchCharListFromDb(callback: DatabaseCallback) = characterRepository.fetchCharListFromDb(callback)
     fun createVertex(index: Int, data: String) = characterRepository.createVertex(index, data)
     fun addDirectedEdge(source: Vertex, destination: Vertex) = characterRepository.addDirectedEdge(source, destination)

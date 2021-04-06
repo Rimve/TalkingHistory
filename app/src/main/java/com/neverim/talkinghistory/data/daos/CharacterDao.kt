@@ -6,8 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class CharacterDao {
 
@@ -17,8 +15,7 @@ class CharacterDao {
     private val filesList = ArrayList<FileLoc>()
     private val charList = ArrayList<String>()
     private val edges = ArrayList<Edge>()
-    private val question = ArrayList<Vertex>()
-    private var similarities = HashMap<String, ArrayList<String>>()
+    private val questions = ArrayList<Vertex>()
     private var first: Vertex? = null
 
     private val mutableAdjacenciesList = MutableLiveData<HashMap<Vertex, ArrayList<Edge>>>()
@@ -29,7 +26,7 @@ class CharacterDao {
         Log.i(LOG_TAG, "initializing DAO")
         mutableAdjacenciesList.value = adjacencies
         mutableEdges.value = edges
-        mutableQuestion.value = question
+        mutableQuestion.value = questions
     }
 
     fun addChar(charName: String) {
@@ -40,15 +37,11 @@ class CharacterDao {
         filesList.add(FileLoc(nodeId, charName, fileName))
     }
 
-    fun addSimilarities(sims: HashMap<String, ArrayList<String>>) {
-        similarities = sims
-    }
-
     fun createVertex(index: Int, data: String): Vertex {
         val vertex = Vertex(index, data)
         adjacencies[vertex] = ArrayList()
-        question.add(vertex)
-        mutableQuestion.value = question
+        questions.add(vertex)
+        mutableQuestion.value = questions
         return vertex
     }
 
@@ -62,7 +55,7 @@ class CharacterDao {
         Log.i(LOG_TAG, "clearing adjacencies DAO")
         adjacencies.clear()
         edges.clear()
-        question.clear()
+        questions.clear()
         charList.clear()
         first = null
     }
@@ -92,6 +85,5 @@ class CharacterDao {
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
     fun getAudioFileList() = filesList
     fun getCharList() = charList
-    fun getSimilarities() = similarities
 
 }

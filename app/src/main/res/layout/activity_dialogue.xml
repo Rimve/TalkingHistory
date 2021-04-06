@@ -3,45 +3,53 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.DialogueActivity">
+    android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/tv_dialogue_question"
-        android:layout_width="339dp"
-        android:layout_height="131dp"
-        app:autoSizeMaxTextSize="100sp"
-        app:autoSizeMinTextSize="12sp"
-        app:autoSizeStepGranularity="2sp"
-        app:autoSizeTextType="uniform"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/tv_dial_question"
+        android:layout_width="335dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/round_outline"
+        android:outlineProvider="background"
+        app:layout_constraintBottom_toTopOf="@+id/iv_dial_speak"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.068" />
+        app:layout_constraintVertical_bias="0.41" />
 
-    <ListView
-        android:id="@+id/lv_dialogue_choices"
-        android:layout_width="397dp"
-        android:layout_height="267dp"
+    <ImageView
+        android:id="@+id/iv_dial_speak"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/speak_outline"
+        android:outlineProvider="background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.333"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_dialogue_question"
-        app:layout_constraintVertical_bias="0.143" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/btn_dialogue_restart"
+    <ImageView
+        android:id="@+id/iv_dial_listening_circle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:text="Restart"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.771" />
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_dial_speak"
+        app:layout_constraintEnd_toEndOf="@+id/iv_dial_speak"
+        app:layout_constraintStart_toStartOf="@+id/iv_dial_speak"
+        app:layout_constraintTop_toTopOf="@+id/iv_dial_speak"
+        app:srcCompat="@drawable/speak_circle" />
+
+    <ImageView
+        android:id="@+id/iv_dial_mic"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        app:layout_constraintBottom_toBottomOf="@+id/iv_dial_speak"
+        app:layout_constraintEnd_toEndOf="@+id/iv_dial_speak"
+        app:layout_constraintStart_toStartOf="@+id/iv_dial_speak"
+        app:layout_constraintTop_toTopOf="@+id/iv_dial_speak"
+        app:srcCompat="@drawable/speak_icon" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
