@@ -18,9 +18,7 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
 
     private fun getAudioFile(charName: String, nodeFile: FileLoc) {
         val localFile = File.createTempFile(nodeFile.fileName, ".mp3")
-        val downloadTask = storageHelper.audioStorageRef(charName).child("${nodeFile.fileName}.mp3").getFile(
-            localFile
-        )
+        val downloadTask = storageHelper.audioStorageRef(charName).child("${nodeFile.fileName}.mp3").getFile(localFile)
         downloadTask.addOnFailureListener {
             Log.e(LOG_TAG, "audio download task failed")
         }.addOnSuccessListener {

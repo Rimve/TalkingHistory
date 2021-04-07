@@ -14,4 +14,6 @@ object Constants {
     const val WORD_ANY = "..."
     const val WORD_OTHER = "Kiti"
     const val WORD_UNCATEGORIZED = "Nekategorizuoti"
+    const val MAX_ERRORS = 2
+    const val ERROR = "Error"
 }
