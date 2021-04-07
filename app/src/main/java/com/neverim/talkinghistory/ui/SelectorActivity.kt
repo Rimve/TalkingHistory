@@ -1,6 +1,10 @@
 package com.neverim.talkinghistory.ui
 
+import android.app.AlertDialog
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Bundle
 import android.util.Log
 import android.widget.*
@@ -46,10 +50,13 @@ class SelectorActivity : AppCompatActivity() {
     private var charsArray: ArrayList<String> = ArrayList()
     private var charInfoList: ArrayList<CharacterInfo> = ArrayList()
     private var backPressed: Long = 0
+    private var alert: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_select_char)
+
+        checkConnection()
 
         recycler = findViewById(R.id.rv_select_char)
 
@@ -125,6 +132,33 @@ class SelectorActivity : AppCompatActivity() {
                 recyclerAdapter.notifyDataSetChanged()
             }
         }, charName, imageFileName)
+    }
+
+    private fun checkConnection() {
+        val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager.registerDefaultNetworkCallback(object :
+            ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                if (alert != null) {
+                    alert!!.dismiss()
+                    alert = null
+                    connectivityManager.unregisterNetworkCallback(this)
+                }
+            }
+        })
+        if (connectivityManager.activeNetwork == null && alert == null) {
+            showAlert()
+        }
+    }
+
+    private fun showAlert() {
+        val dialogBuilder = AlertDialog.Builder(this)
+        dialogBuilder.setMessage("Make sure that Wi-Fi or mobile data is turned on, then try again")
+            .setCancelable(false)
+        alert = dialogBuilder.create()
+        alert!!.setTitle("No Internet Connection")
+        alert!!.setIcon(R.drawable.ic_bad_connection)
+        alert!!.show()
     }
 
 }

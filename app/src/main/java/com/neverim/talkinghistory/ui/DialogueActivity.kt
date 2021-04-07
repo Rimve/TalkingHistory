@@ -1,6 +1,9 @@
 package com.neverim.talkinghistory.ui
 
+import android.content.Context
 import android.media.MediaPlayer
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Bundle
 import android.util.Log
 import android.view.animation.Animation
@@ -95,6 +98,7 @@ class DialogueActivity : AppCompatActivity() {
         recognizerViewModel = ViewModelProvider(this, recognizerFactory).get(RecognizerViewModel::class.java)
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
 
+        registerConnectionCallback()
         initializeAnimations()
         getAudioFileList(charName)
         getErrorAudioFileList()
@@ -114,6 +118,10 @@ class DialogueActivity : AppCompatActivity() {
             circleScaleDown()
         }
 
+        startRecognition(charName)
+    }
+
+    private fun startRecognition(charName: String) {
         recognizerViewModel.startRecognition(this)
         CoroutineScope(Dispatchers.IO).launch {
             while (recognizerViewModel.isRecognizing()) {
@@ -351,6 +359,26 @@ class DialogueActivity : AppCompatActivity() {
         withContext(Dispatchers.Default) {
             listeningCircle.startAnimation(animationSet)
         }
+    }
+
+    private fun registerConnectionCallback() {
+        val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager.registerDefaultNetworkCallback(object :
+            ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                startRecognition(selectedChar!!)
+            }
+
+            override fun onLosing(network: Network, maxMsToLive: Int) {
+                Log.w(LOG_TAG, "losing connection")
+                recognizerViewModel.stopRecognition()
+            }
+
+            override fun onLost(network: Network) {
+                Log.e(LOG_TAG, "connection lost")
+                recognizerViewModel.stopRecognition()
+            }
+        })
     }
 
 }
