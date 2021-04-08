@@ -45,7 +45,7 @@
     position: absolute;
     right: 8px;
     display: grid;
-    grid-template-columns: repeat(3, auto);
+    grid-template-columns: repeat(4, auto);
     align-self: center;
     margin-block: 0;
     transition: all 0.3s ease;
@@ -67,6 +67,10 @@
 .menu-icon {
     display: none;
     align-self: center;
+}
+
+.table-container {
+    max-width: 800px;
 }
 
 @media screen and (max-width: 1000px) {
@@ -105,7 +109,7 @@
         padding: 2px;
     }
 
-    @media screen and (max-width: 692px) {
+    @media screen and (max-width: 880px) {
 
         .menu-icon-position {
             display: flex;

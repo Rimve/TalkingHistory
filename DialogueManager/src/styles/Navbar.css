@@ -34,6 +34,8 @@
 
 .navbar {
     background-color: var(--main-color);
+    width: 100%;
+    position: fixed !important;
     height: 60px;
     display: flex;
     flex-direction: row;

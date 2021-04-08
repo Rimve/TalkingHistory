@@ -8,6 +8,8 @@ import Register from "../pages/Register";
 import PageLoadingComponent from "./PageLoadingComponent";
 import NotFound from "../pages/NotFound";
 import Management from "../pages/Management";
+import Users from "../pages/Users";
+import Words from "../pages/Words";
 
 export default class BodyComponent extends Component {
 
@@ -21,7 +23,7 @@ export default class BodyComponent extends Component {
                 <div className='body-loading' id='body'>
                     <PageLoadingComponent />
                 </div>
-            );
+            )
         }
         else {
             return (
@@ -40,10 +42,16 @@ export default class BodyComponent extends Component {
                         <Route path='/register' render={() =>
                             this.props.authStatus ? <Redirect to='/'/> : <Register/>}
                         />
+                        <Route path='/users' render={() =>
+                            this.props.authStatus ? <Users/> : <Redirect to='/'/>}
+                        />
+                        <Route path='/words' render={() =>
+                            this.props.authStatus ? <Words/> : <Redirect to='/'/>}
+                        />
                         <Route path='*' component={NotFound} />
                     </Switch>
                 </div>
-            );
+            )
         }
     }
 
@@ -52,6 +60,6 @@ export default class BodyComponent extends Component {
             <>
                 {this.loadPage()}
             </>
-        );
+        )
     }
 }

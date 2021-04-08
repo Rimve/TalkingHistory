@@ -8,11 +8,13 @@ import {
     getCharAdjRef, getCharNodeRef,
     getDstNode, getCharQuestionsRef,
     getCharQuestionOfIdRef, getCharAudioStorageRef,
-    getCharAudioFileRef
+    getCharAudioFileRef, getCurrentUserRole
 } from "../services/DatabaseService";
 import "firebase/database";
 import '../styles/CyStyle.css';
 import UploadModalComponent from "./UploadModalComponent";
+import PageLoadingComponent from "./PageLoadingComponent";
+import {ROLES} from "../data/Roles";
 
 class GraphComponent extends React.Component{
 
@@ -26,6 +28,7 @@ class GraphComponent extends React.Component{
             nodeToEdit: null,
             nodeToAttachFileTo: null,
             nodeToConnectFrom: null,
+            userRole: null,
             name: "",
             update: false,
             showEdit: false,
@@ -165,7 +168,7 @@ class GraphComponent extends React.Component{
             selector: 'edge',
             commands: [
                 {
-                    fillColor: 'rgba(222,155,39,0.85)',
+                    fillColor: 'rgba(222,155,39,0.6)',
                     opacity: 0.1,
                     content: 'Remove',
                     contentStyle: {},
@@ -177,7 +180,7 @@ class GraphComponent extends React.Component{
             ],
             fillColor: 'rgba(0, 0, 0, 0.75)',
             activeFillColor: 'rgba(59,82,86,0.5)',
-            activePadding: 20,
+            activePadding: 3,
             indicatorSize: 12,
             separatorWidth: 0,
             spotlightPadding: 5,
@@ -243,11 +246,14 @@ class GraphComponent extends React.Component{
                     nodeDimensionsIncludeLabels: true
                 }
             });
-        // Add context menu on nodes
-        cy.cxtmenu(nodeCtxSettings);
 
-        // Add context menu on edges
-        cy.cxtmenu(edgeCtxSettings);
+        if (this.state.userRole !== ROLES.USER) {
+            // Add context menu on nodes
+            cy.cxtmenu(nodeCtxSettings);
+
+            // Add context menu on edges
+            cy.cxtmenu(edgeCtxSettings);
+        }
 
         // Add a ay to connect one node to already existing one
         cy.on('click', 'node', (evt) => {
@@ -268,6 +274,11 @@ class GraphComponent extends React.Component{
         let nodes = [];
         let edges = [];
         let questionNodes = [];
+
+        await getCurrentUserRole().once("value")
+            .then((data) => {
+                this.setState({userRole: data.val()})
+            })
 
         await getCharNodeRef(name).once('value')
             .then((snapshot) => {
@@ -548,19 +559,26 @@ class GraphComponent extends React.Component{
     }
 
     render() {
-        return (
-            <div className="graph-container"
-                 id="cy"
-                 onContextMenu={
-                     (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                     }
-                 }>
-                {this.modalComponent()}
-                {this.uploadComponent()}
+        if (this.state.update) {
+            return (
+                <div className="graph-container"
+                     id="cy"
+                     onContextMenu={
+                         (e) => {
+                             e.preventDefault();
+                             e.stopPropagation();
+                         }
+                     }>
+                    {this.modalComponent()}
+                    {this.uploadComponent()}
+                </div>
+            )
+        }
+        else return (
+            <div className='body-loading' id='body'>
+                <PageLoadingComponent />
             </div>
-        );
+        )
     }
 }
 

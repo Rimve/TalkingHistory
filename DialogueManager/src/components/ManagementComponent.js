@@ -1,11 +1,13 @@
 import React from 'react'
-import {getCharDescriptionRef, getNodesRef} from "../services/DatabaseService";
+import {getCharDescriptionRef, getCurrentUserRole, getNodesRef} from "../services/DatabaseService";
 import '../styles/CharacterSelection.css';
 import * as FiIcons from 'react-icons/fi';
 import {Link, withRouter} from "react-router-dom";
 import ComponentLoadingComponent from "./ComponentLoadingComponent";
 import {getCharacterPicture} from "../services/Utilities";
 import EditCharModal from "./EditCharModal";
+import PageLoadingComponent from "./PageLoadingComponent";
+import {ROLES} from "../data/Roles";
 
 class ManagementComponent extends React.Component{
     constructor(props){
@@ -15,6 +17,7 @@ class ManagementComponent extends React.Component{
             charList: [],
             loaded: false,
             showEdit: false,
+            userRole: null,
             name: '',
             description: ''
         };
@@ -25,12 +28,17 @@ class ManagementComponent extends React.Component{
     };
 
     async getCharData() {
-        getNodesRef().once('value').then((charNodes) => {
-            let results = charNodes.val();
-            this.buildCharData(results);
-        }).catch((e) => {
-            console.log(e)
-        });
+        getNodesRef().once('value')
+            .then((charNodes) => {
+                let results = charNodes.val();
+                this.buildCharData(results);
+            }).catch((e) => {
+                console.log(e)
+            });
+        await getCurrentUserRole().once("value")
+            .then((data) => {
+                this.setState({userRole: data.val()})
+            })
     }
 
     async buildCharData(results) {
@@ -66,6 +74,19 @@ class ManagementComponent extends React.Component{
         });
     }
 
+    showCharacterCreationBtn() {
+        if (this.state.userRole !== ROLES.USER) {
+            return (
+                <div className="character-entry">
+                    <button onClick={() => this.createCharacter()}
+                            className="character-item d-flex justify-content-center align-items-center">
+                        <b>+</b>
+                    </button>
+                </div>
+            )
+        }
+    }
+
     createCharacter() {
         this.setState({name: null, description: null, showEdit: true})
     }
@@ -83,12 +104,12 @@ class ManagementComponent extends React.Component{
     }
 
     async componentDidMount() {
-        await this.getCharData();
+        await this.getCharData()
     }
 
     async componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.state.loaded !== prevState.loaded) {
-            await this.getCharData();
+            await this.getCharData()
         }
     }
 
@@ -139,16 +160,15 @@ class ManagementComponent extends React.Component{
                             )
                         })
                     }
-                    <div className="character-entry">
-                        <button onClick={() => this.createCharacter()}
-                                className="character-item d-flex justify-content-center align-items-center">
-                            <b>+</b>
-                        </button>
-                    </div>
+                    {this.showCharacterCreationBtn()}
                 </div>
             );
         }
-        else return null;
+        else return (
+            <div className='body-loading' id='body'>
+                <PageLoadingComponent />
+            </div>
+        )
     }
 }
 

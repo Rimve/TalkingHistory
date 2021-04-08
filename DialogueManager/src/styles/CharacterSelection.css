@@ -13,6 +13,7 @@
 .character-grid {
     flex: 1;
     display: grid;
+    margin-top: 60px;
     grid-template-columns: repeat(5, auto);
 }
 

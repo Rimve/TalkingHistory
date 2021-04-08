@@ -12,6 +12,12 @@ export const MenuData = [
         onClick: () => temp()
     },
     {
+        title: 'Similarities',
+        path: '/words',
+        icon: <FaIcons.FaObjectGroup />,
+        onClick: () => temp()
+    },
+    {
         title: 'Users',
         path: '/users',
         icon: <FaIcons.FaUserCircle />,
