@@ -7,6 +7,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
@@ -47,10 +48,12 @@ class SelectorActivity : AppCompatActivity() {
 
     // Variables
     private lateinit var brokenImage: Bitmap
+    private lateinit var loadingBar: ProgressBar
     private var charsArray: ArrayList<String> = ArrayList()
     private var charInfoList: ArrayList<CharacterInfo> = ArrayList()
     private var backPressed: Long = 0
     private var alert: AlertDialog? = null
+    private var recyclerVisible: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +62,7 @@ class SelectorActivity : AppCompatActivity() {
         checkConnection()
 
         recycler = findViewById(R.id.rv_select_char)
+        loadingBar = findViewById(R.id.pb_recycler)
 
         characterViewModel = ViewModelProvider(this, characterFactory).get(CharacterViewModel::class.java)
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
@@ -75,14 +79,15 @@ class SelectorActivity : AppCompatActivity() {
         if (backPressed + Constants.BACK_TIME_INTERVAL > System.currentTimeMillis()) {
             super.onBackPressed()
             finish()
-        } else {
+        }
+        else {
             Toast.makeText(baseContext, R.string.press_back, Toast.LENGTH_SHORT).show()
         }
         backPressed = System.currentTimeMillis()
     }
 
     private fun initializeUi() {
-        val linearLayoutManager = LinearLayoutManager(applicationContext)
+        val linearLayoutManager = LinearLayoutManager(this)
         recycler.layoutManager = linearLayoutManager
         recycler.adapter = recyclerAdapter
         characterViewModel.clear()
@@ -112,24 +117,28 @@ class SelectorActivity : AppCompatActivity() {
         characterViewModel.getDescription(object : DatabaseCallback {
             override fun onResponse(response: IDatabaseResponse) {
                 val desc = response.data as String?
+                charInfoList.add(CharacterInfo(null, charName, desc))
+                recyclerAdapter.notifyDataSetChanged()
+                showRecycler()
                 characterViewModel.getImageFileName(object : DatabaseCallback {
                     override fun onResponse(response: IDatabaseResponse) {
                         val imageFileName = response.data.toString()
-                        createCharEntry(charName, imageFileName, desc)
+                        addImageToChar(charName, imageFileName)
                     }
                 }, charName)
             }
         }, charName)
     }
 
-    private fun createCharEntry(charName: String, imageFileName: String?, desc: String?) {
+    private fun addImageToChar(charName: String, imageFileName: String?) {
         storageViewModel.getImageFile(object : DatabaseCallback {
             override fun onResponse(response: IDatabaseResponse) {
-                if (response.exception is Exception)
-                    charInfoList.add(CharacterInfo(brokenImage, charName, desc))
-                else
-                    charInfoList.add(CharacterInfo(response.data as Bitmap?, charName, desc))
-                recyclerAdapter.notifyDataSetChanged()
+                if (response.exception is Exception) {
+                    recyclerAdapter.addImageToChar(charName, brokenImage)
+                }
+                else {
+                    recyclerAdapter.addImageToChar(charName, response.data as Bitmap)
+                }
             }
         }, charName, imageFileName)
     }
@@ -148,6 +157,14 @@ class SelectorActivity : AppCompatActivity() {
         })
         if (connectivityManager.activeNetwork == null && alert == null) {
             showAlert()
+        }
+    }
+
+    private fun showRecycler() {
+        if (!recyclerVisible) {
+            loadingBar.visibility = View.INVISIBLE
+            recycler.visibility = View.VISIBLE
+            recyclerVisible = true
         }
     }
 

@@ -17,12 +17,20 @@ class CharacterRepository private constructor(private val characterDao: Characte
     private val databaseHelper = DatabaseSource()
     private var vertices: HashMap<String, Vertex> = HashMap()
 
-    fun addFile(nodeId: Int, charName: String, fileName: String) {
+    private fun addFile(nodeId: Int, charName: String, fileName: String) {
         characterDao.addFile(nodeId, charName, fileName)
+    }
+
+    private fun addErrorFile(nodeId: Int, fileName: String) {
+        characterDao.addErrorFile(nodeId, fileName)
     }
 
     fun createVertex(index: Int, node: String): Vertex {
         return characterDao.createVertex(index, node)
+    }
+
+    private fun clearFileList() {
+        characterDao.clearFileList()
     }
 
     fun addDirectedEdge(source: Vertex, destination: Vertex) {
@@ -168,10 +176,32 @@ class CharacterRepository private constructor(private val characterDao: Characte
             }
             else {
                 Log.e(LOG_TAG, task.toString())
+                response.data = null
                 response.exception = task.exception
             }
             callback.onResponse(response)
         }
+    }
+
+    fun getErrorAudioFileList(callback: DatabaseCallback) {
+        databaseHelper.getFilesLocRef().child(Constants.ERROR).child("audio").get()
+            .addOnCompleteListener { task ->
+                Log.i(LOG_TAG, "getting audio file list for '${Constants.ERROR}'")
+                val response = IDatabaseResponse()
+                if (task.isSuccessful) {
+                    val result = task.result
+                    result?.value?.let {
+                        getFileListFromDatabase(result, Constants.ERROR)
+                        response.data = characterDao.getErrorAudioFileList()
+                    }
+                }
+                else {
+                    Log.e(LOG_TAG, task.toString())
+                    response.data = null
+                    response.exception = task.exception
+                }
+                callback.onResponse(response)
+            }
     }
 
     private fun getAdjacencies(charName: String) {
@@ -200,11 +230,18 @@ class CharacterRepository private constructor(private val characterDao: Characte
 
     private fun getFileListFromDatabase(snapshot: DataSnapshot, charName: String) {
         Log.i(LOG_TAG, "getting file list from database")
+        clearFileList()
+
         if (snapshot.value is ArrayList<*>) {
             val files = snapshot.value as ArrayList<String?>
             files.forEachIndexed { nodeId, data ->
                 if (data != null) {
-                    addFile(nodeId, charName, data)
+                    if (charName == Constants.ERROR) {
+                        addErrorFile(nodeId, data)
+                    }
+                    else {
+                        addFile(nodeId, charName, data)
+                    }
                 }
             }
         }
@@ -212,7 +249,12 @@ class CharacterRepository private constructor(private val characterDao: Characte
         if (snapshot.value is HashMap<*, *>) {
             val files = snapshot.value as HashMap<String, String>
             for ((key, value) in files) {
-                addFile(key.toInt(), charName, value)
+                if (charName == Constants.ERROR) {
+                    addErrorFile(key.toInt(), value)
+                }
+                else {
+                    addFile(key.toInt(), charName, value)
+                }
             }
         }
     }

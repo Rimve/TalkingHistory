@@ -72,7 +72,7 @@ class GraphComponent extends React.Component{
 
         if (file !== null) {
             let fileName = file.name.split('.');
-            getCharAudioStorageRef(name, fileName[0]).put(file).then((snapshot) => {
+            getCharAudioStorageRef(name, file.name).put(file).then((snapshot) => {
                 getCharAudioFileRef(name, nodeToAttachFileTo.id).set(fileName[0]);
             });
         } else {
@@ -255,7 +255,7 @@ class GraphComponent extends React.Component{
             cy.cxtmenu(edgeCtxSettings);
         }
 
-        // Add a ay to connect one node to already existing one
+        // Add a way to connect one node to already existing one
         cy.on('click', 'node', (evt) => {
             const {nodeToConnectFrom} = this.state;
             if (nodeToConnectFrom != null) {
@@ -559,7 +559,7 @@ class GraphComponent extends React.Component{
     }
 
     render() {
-        if (this.state.update) {
+        // if (this.state.update) {
             return (
                 <div className="graph-container"
                      id="cy"
@@ -573,12 +573,12 @@ class GraphComponent extends React.Component{
                     {this.uploadComponent()}
                 </div>
             )
-        }
-        else return (
-            <div className='body-loading' id='body'>
-                <PageLoadingComponent />
-            </div>
-        )
+        // }
+        // else return (
+        //     <div className='body-loading' id='body'>
+        //         <PageLoadingComponent />
+        //     </div>
+        // )
     }
 }
 

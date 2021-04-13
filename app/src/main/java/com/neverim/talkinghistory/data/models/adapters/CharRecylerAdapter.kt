@@ -1,6 +1,7 @@
 package com.neverim.talkinghistory.data.models.adapters
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,9 +17,7 @@ class CharRecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         // Inflate the item Layout
         val v: View = LayoutInflater.from(parent.context).inflate(
-            R.layout.recycler_row,
-            parent,
-            false
+            R.layout.recycler_row, parent, false
         )
 
         // Set the view's size, margins, paddings and layout parameters
@@ -27,6 +26,15 @@ class CharRecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
 
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         // Set the data in items
+        holder.charNameTextView.text = charInfoList[position].charName
+
+        holder.charImageView.setOnClickListener {
+            val context = holder.charImageView.context
+            val dialogueIntent = Intent(context, DialogueActivity::class.java)
+            dialogueIntent.putExtra("char", charInfoList[position].charName)
+            context.startActivity(dialogueIntent)
+        }
+
         if (charInfoList[position].pictureBitmap != null) {
             holder.charImageView.setImageBitmap(charInfoList[position].pictureBitmap)
             holder.charImageView.clipToOutline = true
@@ -43,19 +51,21 @@ class CharRecyclerAdapter(private val charInfoList: ArrayList<CharacterInfo>) :
         }
         else {
             holder.charDescTextView.text = charInfoList[position].charDesc
-        }
-
-        holder.charNameTextView.text = charInfoList[position].charName
-        holder.charImageView.setOnClickListener {
-            val context = holder.charImageView.context
-            val dialogueIntent = Intent(context, DialogueActivity::class.java)
-            dialogueIntent.putExtra("char", charInfoList[position].charName)
-            context.startActivity(dialogueIntent)
+            holder.charDescTextView.visibility = View.VISIBLE
         }
     }
 
     override fun getItemCount(): Int {
         return charInfoList.size
+    }
+
+    fun addImageToChar(charName: String, image: Bitmap) {
+        charInfoList.forEachIndexed { index, char ->
+            if (char.charName == charName) {
+                char.pictureBitmap = image
+                notifyItemChanged(index)
+            }
+        }
     }
 
     private fun removeAt(position: Int) {

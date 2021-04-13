@@ -38,7 +38,10 @@ export default class CategorizedWordsComponent extends Component {
                     if (similarities[entry].tableName === category) {
                         let tmpSimilarities = similarities
                         tmpSimilarities[entry].values[index] = word
-                        this.setState({similarities: tmpSimilarities})
+                        this.setState({
+                            similarities: tmpSimilarities,
+                            updatedWord: null
+                        })
                     }
                 }
             })

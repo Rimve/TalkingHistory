@@ -8,6 +8,7 @@ import com.neverim.talkinghistory.data.StorageSource
 import com.neverim.talkinghistory.data.daos.StorageDao
 import com.neverim.talkinghistory.data.models.FileLoc
 import java.io.File
+import java.lang.Exception
 
 
 class StorageRepository private constructor(private val storageDao: StorageDao) {
@@ -17,8 +18,11 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
     private val storageHelper = StorageSource()
 
     private fun getAudioFile(charName: String, nodeFile: FileLoc) {
+        Log.i(LOG_TAG, "downloading audio file for: $charName")
         val localFile = File.createTempFile(nodeFile.fileName, ".mp3")
-        val downloadTask = storageHelper.audioStorageRef(charName).child("${nodeFile.fileName}.mp3").getFile(localFile)
+        val downloadTask =
+            storageHelper.audioStorageRef(charName).child("${nodeFile.fileName}.mp3")
+                .getFile(localFile)
         downloadTask.addOnFailureListener {
             Log.e(LOG_TAG, "audio download task failed")
         }.addOnSuccessListener {
@@ -29,11 +33,11 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
 
     fun getImageFile(callback: DatabaseCallback, charName: String, fileName: String?) {
         if (fileName != null) {
+            Log.i(LOG_TAG, "downloading image file for: $charName")
             val localFile = File.createTempFile(fileName, ".jpg")
-            val downloadTask =
-                storageHelper.imageStorageRef(charName).child("$fileName.jpg").getFile(
-                    localFile
-                )
+            val downloadTask = storageHelper.imageStorageRef(charName)
+                .child("$fileName.jpg")
+                .getFile(localFile)
             downloadTask.addOnCompleteListener { task ->
                 Log.i(LOG_TAG, "image download task completed")
                 val response = IDatabaseResponse()
@@ -44,6 +48,8 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
                     response.exception = task.exception
                 }
                 callback.onResponse(response)
+            }.addOnFailureListener {
+                Log.e(LOG_TAG, "image download task failed with exception: $it")
             }
         }
     }

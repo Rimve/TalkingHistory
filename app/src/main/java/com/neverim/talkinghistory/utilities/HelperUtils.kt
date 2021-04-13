@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.util.Log
 import com.google.api.gax.core.CredentialsProvider
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.ServiceAccountCredentials
@@ -19,6 +20,8 @@ import java.util.*
 
 
 object HelperUtils {
+
+    private val LOG_TAG = this.javaClass.simpleName
 
     suspend fun levDistance(str1: String, str2: String): Int {
         val dp = Array(str1.length + 1) {
@@ -54,6 +57,7 @@ object HelperUtils {
 
     @Throws(IOException::class)
     fun authExplicit(context: Context): SpeechSettings {
+        Log.i(LOG_TAG, "API auth")
         val inputStream: InputStream = context.resources.openRawResource(R.raw.auth)
         val credentialsProvider: CredentialsProvider = FixedCredentialsProvider
             .create(ServiceAccountCredentials.fromStream(inputStream))

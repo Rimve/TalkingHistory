@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationSet
 import android.view.animation.AnimationUtils
@@ -43,9 +44,12 @@ class DialogueActivity : AppCompatActivity() {
     // View elements and models
     private lateinit var textView: TextView
     private lateinit var listeningCircle: ImageView
+    private lateinit var micImage: ImageView
+    private lateinit var speakImage: ImageView
     private lateinit var edgeAdapter: EdgeArrayAdapter
     private lateinit var currentQuestion: Vertex
     private lateinit var mediaPlayer: MediaPlayer
+    private lateinit var progressBar: ProgressBar
 
     // ViewModels
     private lateinit var characterViewModel: CharacterViewModel
@@ -66,8 +70,10 @@ class DialogueActivity : AppCompatActivity() {
     private var errorFileList = ArrayList<FileLoc>()
     private var selectedChar: String? = null
     private var answer: String? = null
-    private var spoke = false
     private var errorCount = 0
+    private var connectionLost = false
+    private var endOfDialogue = false
+    private var initialized = false
     private val locale = Locale.forLanguageTag(Constants.LANGUAGE_CODEC)
     private val animationSet = AnimationSet(false)
 
@@ -77,6 +83,9 @@ class DialogueActivity : AppCompatActivity() {
 
         textView = findViewById(R.id.tv_dial_question)
         listeningCircle = findViewById(R.id.iv_dial_listening_circle)
+        progressBar = findViewById(R.id.pb_dialogue)
+        micImage = findViewById(R.id.iv_dial_mic)
+        speakImage = findViewById(R.id.iv_dial_speak)
 
         selectedChar = intent.getStringExtra("char")
 
@@ -89,7 +98,42 @@ class DialogueActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer.release()
+        CoroutineScope(Dispatchers.Default).launch {
+            stopActivity()
+        }
+        Log.e(LOG_TAG, "on destroy")
+    }
+
+//    override fun onStop() {
+//        super.onStop()
+//        stopActivity()
+//        Log.e(LOG_TAG, "on stopped")
+//    }
+//
+//    override fun onRestart() {
+//        super.onRestart()
+//        stopActivity()
+//        if (selectedChar != null) {
+//            initializeUi(selectedChar!!)
+//        }
+//        Log.e(LOG_TAG, "on restart")
+//    }
+//
+//    override fun onResume() {
+//        super.onResume()
+//        stopActivity()
+//        if (selectedChar != null) {
+//            initializeUi(selectedChar!!)
+//        }
+//        Log.e(LOG_TAG, "on resume")
+//    }
+
+    private fun handleLoaderVisibility() {
+        progressBar.visibility = View.INVISIBLE
+        textView.visibility = View.VISIBLE
+        listeningCircle.visibility = View.VISIBLE
+        micImage.visibility = View.VISIBLE
+        speakImage.visibility = View.VISIBLE
     }
 
     private fun initializeUi(charName: String) {
@@ -99,9 +143,8 @@ class DialogueActivity : AppCompatActivity() {
         storageViewModel = ViewModelProvider(this, storageFactory).get(StorageViewModel::class.java)
 
         registerConnectionCallback()
-        initializeAnimations()
-        getAudioFileList(charName)
         getErrorAudioFileList()
+        getAudioFileList(charName)
         getWordSimilarities()
 
         recognizerViewModel.audioSetup(this)
@@ -109,6 +152,7 @@ class DialogueActivity : AppCompatActivity() {
         characterViewModel.fetchCharDataFromDb(charName)
 
         initiateObservers()
+        initializeAnimations()
 
         edgeAdapter = EdgeArrayAdapter(this, edgeArray)
         edgeAdapter.notifyDataSetChanged()
@@ -117,19 +161,24 @@ class DialogueActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.Default).launch {
             circleScaleDown()
         }
-
-        startRecognition(charName)
     }
 
     private fun startRecognition(charName: String) {
         recognizerViewModel.startRecognition(this)
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
+            Log.i(LOG_TAG, "starting routine scope")
             while (recognizerViewModel.isRecognizing()) {
                 if (answer != null) {
+                    Log.e(LOG_TAG, "answer: $answer")
                     handleDialogue(charName)
                 }
             }
         }
+    }
+
+    private fun stopRecognition() {
+        Log.i(LOG_TAG, "stopRecognition() called")
+        recognizerViewModel.stopRecognition()
     }
 
     private suspend fun handleDialogue(charName: String) {
@@ -138,7 +187,7 @@ class DialogueActivity : AppCompatActivity() {
         if (mostRelevantEdge != null) {
             Log.i(LOG_TAG, "found most suitable answer: $answer")
             // Stop recognition after answer to bypass 1 minute stream limit
-            recognizerViewModel.stopRecognition()
+            stopRecognition()
             // Change dialogue entry according to the most relevant answer
             changeQuestion(mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
             // Play the audio file attached to this question
@@ -147,13 +196,9 @@ class DialogueActivity : AppCompatActivity() {
             characterViewModel.edges(currentQuestion)
             answer = null
             // If there are no more edges - the dialogue is over
-            if (edgeArray.size == 0) {
-                Log.e(LOG_TAG, "stopping recognition")
-                mediaPlayer.release()
-            }
-            // Otherwise start the recognition again (bypassing 1 minute limit)
-            else {
-                recognizerViewModel.startRecognition(this@DialogueActivity)
+            if (checkIfEnd()) {
+                Log.e(LOG_TAG, "stopped recognition")
+                stopActivity()
             }
         }
     }
@@ -171,37 +216,26 @@ class DialogueActivity : AppCompatActivity() {
     }
 
     private suspend fun findEdgeWithLowestScore(transcript: String?): Edge? {
-        Log.i(LOG_TAG, "calculating distance")
-        Log.e(LOG_TAG, "transcript $transcript")
+        Log.i(LOG_TAG, "transcript: $transcript")
         // Find what was the answer
-        val possibleAnswer = transcript?.let { getSimilaritiesOfWord(it) }
         if (transcript == Constants.ERROR.toLowerCase(locale)) {
             return edgeArray[0]
         }
-        if (transcript != null) {
-            // Check if any of the question edges has this or very similar answer
-            edgeArray.forEach { edge ->
-                // If answer can be any word then we do not need to search further
-                if (edge.destination.data.toLowerCase(locale) == Constants.WORD_ANY) {
-                    answer = null
-                    return edge
-                }
-                if (possibleAnswer != null && edge.destination.data.toLowerCase(locale) == possibleAnswer) {
-                    // Return the most relevant edge and reset the answer
-                    answer = null
-                    return edge
-                }
-            }
-            playErrorAudio()
-            characterViewModel.insertUncategorizedWord(selectedChar!!, currentQuestion, transcript)
+        Log.i(LOG_TAG, "calculating distance")
+        val suitableNextEdge = transcript?.let { getSimilaritiesOfWord(it) }
+        if (suitableNextEdge != null) {
+            errorCount = 0
+            return suitableNextEdge
         }
         // Otherwise no similar answer was found - user must repeat
         else {
+            if (transcript != null) {
+                characterViewModel.insertUncategorizedWord(selectedChar!!, currentQuestion, transcript)
+            }
+            playErrorAudio()
             answer = null
             return null
         }
-        answer = null
-        return null
     }
 
     private suspend fun changeEdges(dstNodeEdges: ArrayList<Edge>, srcEdge: Edge): Vertex? {
@@ -215,11 +249,15 @@ class DialogueActivity : AppCompatActivity() {
     }
 
     private suspend fun changeQuestion(edge: Edge, dstVertexEdges: ArrayList<Edge>) {
-        makeToast("Pasirinktas atsakymas: ${edge.destination.data}")
+        //makeToast("Pasirinktas atsakymas: ${edge.destination.data}")
+        Log.i(LOG_TAG, "Pasirinktas atsakymas: ${edge.destination.data}")
         if (dstVertexEdges.size > 0) {
             currentQuestion = changeEdges(dstVertexEdges, edge)!!
-            spoke = false
         }
+    }
+
+    private fun checkIfEnd(): Boolean {
+        return characterViewModel.edgesWithoutUiUpdate(currentQuestion).size == 0
     }
 
     private fun getAudioFileList(charName: String) {
@@ -227,6 +265,7 @@ class DialogueActivity : AppCompatActivity() {
             override fun onResponse(response: IDatabaseResponse) {
                 if (response.data != null) {
                     fileList = response.data as ArrayList<FileLoc>
+                    playCurrentQuestion(selectedChar!!)
                 }
             }
         }, charName)
@@ -234,13 +273,13 @@ class DialogueActivity : AppCompatActivity() {
 
     private fun getErrorAudioFileList() {
         Log.i(LOG_TAG, "getting error audio file list")
-        characterViewModel.getAudioFileList(object : DatabaseCallback {
+        characterViewModel.getErrorAudioFileList(object : DatabaseCallback {
             override fun onResponse(response: IDatabaseResponse) {
                 if (response.data != null) {
                     errorFileList = response.data as ArrayList<FileLoc>
                 }
             }
-        }, Constants.ERROR)
+        })
     }
 
     private fun initiateObservers() {
@@ -249,6 +288,10 @@ class DialogueActivity : AppCompatActivity() {
                 currentQuestion = characterViewModel.retrieveFirst()!!
                 textView.text = currentQuestion.data
                 characterViewModel.edges(currentQuestion)
+                if (!initialized) {
+                    handleLoaderVisibility()
+                    initialized = true
+                }
             }
         })
 
@@ -264,20 +307,40 @@ class DialogueActivity : AppCompatActivity() {
 
         storageViewModel.getAudio().observe(this, Observer { audioFile ->
             if (audioFile != null) {
+                Log.i(LOG_TAG, "audio observer - file changed")
+                stopRecognition()
                 playAudioFile(audioFile)
+                if (checkIfEnd()) {
+                    storageViewModel.getAudio().removeObservers(this@DialogueActivity)
+                }
             }
         })
     }
 
+    private suspend fun stopActivity() {
+        withContext(Dispatchers.Main) {
+            endOfDialogue = true
+            edgeArray.clear()
+            recognizerViewModel.stopRecognition()
+            characterViewModel.getAdjacencies().removeObservers(this@DialogueActivity)
+            characterViewModel.getEdges().removeObservers(this@DialogueActivity)
+            recognizerViewModel.getTranscript().removeObservers(this@DialogueActivity)
+        }
+    }
+
     private fun playAudioFile(audioFile: File) {
         try {
+            Log.i(LOG_TAG, "playing audio file")
             audioFile.deleteOnExit()
             val fis = FileInputStream(audioFile)
             mediaPlayer.reset()
             mediaPlayer.setDataSource(fis.fd)
             mediaPlayer.prepare()
             mediaPlayer.start()
-            mediaPlayer.setOnCompletionListener { fis.close() }
+            mediaPlayer.setOnCompletionListener {
+                fis.close()
+                startRecognition(selectedChar!!)
+            }
         } catch (e: IOException) {
             Log.e(LOG_TAG, e.toString())
         }
@@ -307,32 +370,63 @@ class DialogueActivity : AppCompatActivity() {
         })
     }
 
-    private suspend fun getSimilaritiesOfWord(word: String): String? {
+    private suspend fun getSimilaritiesOfWord(word: String): Edge? {
 
         var lowestDst = Constants.MAXIMUM_LEV_DISTANCE
         var possibleAnswer: String? = null
+        var possibleEdge: Edge? = null
 
-        similaritiesMap.forEach { (keyWord, similarities) ->
-            similarities.forEach { similarWord ->
-                // Calculate the minimum distance between words
-                val dst = HelperUtils.levDistance(
-                    similarWord.toLowerCase(locale),
-                    word.toLowerCase(locale)
-                )
-                // If we found lower scored word - it will be our answer
-                if (lowestDst > dst) {
-                    lowestDst = dst
-                    possibleAnswer = keyWord.toLowerCase(locale)
+        // Check if any of the question edges has this or very similar answer
+        edgeArray.forEach { edge ->
+            // If expected answer is any word, return next edge
+            if (edge.destination.data.toLowerCase(locale) == Constants.WORD_ANY) {
+                answer = null
+                return edge
+            }
+            // Else find the best answer through similar words in that category
+            else {
+                val myKey = edge.destination.data
+                similaritiesMap[myKey]?.forEach { similarWord ->
+                    // Calculate the minimum distance between transcript and similar words
+                    // of available categories
+                    val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
+                    // If we found lower scored word - it will be our answer
+                    if (lowestDst > dst) {
+                        lowestDst = dst
+                        possibleAnswer = myKey.toLowerCase(locale)
+                        possibleEdge = edge
+                        Log.i(LOG_TAG, "score: $dst")
+                    }
                 }
-                // If that word is not positive answer nor is negative
-                // then we assume it might be a specific word if it is of sufficient distance score
-                if (keyWord == Constants.WORD_OTHER && dst < Constants.MAXIMUM_LEV_DISTANCE) {
-                    possibleAnswer = similarWord.toLowerCase(locale)
+
+                // Check if it belongs to the specific word category "Kiti"
+                similaritiesMap[Constants.WORD_OTHER]?.forEach { similarWord ->
+                    if (myKey == similarWord) {
+                        val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
+                        if (lowestDst > dst) {
+                            lowestDst = dst
+                            possibleAnswer = myKey.toLowerCase(locale)
+                            possibleEdge = edge
+                            Log.i(LOG_TAG, "score: $dst")
+                        }
+                    }
+                }
+
+                if (lowestDst == 0) {
+                    Log.i(LOG_TAG, "possible answer: $possibleAnswer")
+                    return possibleEdge
                 }
             }
-
         }
-        return possibleAnswer
+
+        if (possibleEdge != null) {
+            // Return the most relevant edge and reset the answer
+            Log.i(LOG_TAG, "possible answer: $possibleAnswer")
+            answer = null
+            return possibleEdge
+        }
+
+        return null
     }
 
     private suspend fun playErrorAudio() {
@@ -366,7 +460,10 @@ class DialogueActivity : AppCompatActivity() {
         connectivityManager.registerDefaultNetworkCallback(object :
             ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                startRecognition(selectedChar!!)
+                if (connectionLost) {
+                    connectionLost = false
+                    startRecognition(selectedChar!!)
+                }
             }
 
             override fun onLosing(network: Network, maxMsToLive: Int) {
@@ -377,6 +474,7 @@ class DialogueActivity : AppCompatActivity() {
             override fun onLost(network: Network) {
                 Log.e(LOG_TAG, "connection lost")
                 recognizerViewModel.stopRecognition()
+                connectionLost = true
             }
         })
     }

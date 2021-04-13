@@ -4,6 +4,7 @@ import {getCurrentUserRole} from "../services/DatabaseService";
 import {Redirect} from "react-router-dom";
 import {ROLES} from "../data/Roles";
 import PageLoadingComponent from "../components/PageLoadingComponent";
+import '../styles/Responsive.css';
 
 export default class Users extends Component {
     constructor(props) {
@@ -33,7 +34,7 @@ export default class Users extends Component {
     render() {
         return (
             <>
-                <div className="table-responsive">
+                <div className="table-responsive table-container">
                     {this.showComponent()}
                 </div>
             </>

@@ -13,6 +13,9 @@ import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
 import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class RecognizerDao {
 
@@ -56,17 +59,20 @@ class RecognizerDao {
 
     fun startRecognition(context: Context) {
         isRecognizing = true
-        recordingThread = Thread({ streamingMicRecognize(context) }, "Recognizer Thread")
-        recordingThread!!.start()
+        CoroutineScope(Dispatchers.Default).launch {
+            Log.i(LOG_TAG, "starting recognition scope")
+            if (isRecognizing) {
+                streamingMicRecognize(context)
+            }
+        }
     }
 
     fun stopRecognition() {
-        if (null != recorder) {
+        if (null != recorder && isRecognizing) {
             isRecognizing = false
             recorder!!.stop()
             recorder!!.release()
             recorder = null
-            recordingThread = null
             Log.i(LOG_TAG, "stopping recognition")
         }
     }
@@ -120,7 +126,7 @@ class RecognizerDao {
                     }
 
                     override fun onError(t: Throwable) {
-                        Log.e(LOG_TAG, t.toString())
+                        Log.e(LOG_TAG, "Recognition error: $t")
                     }
                 }
                 val clientStream: ClientStream<StreamingRecognizeRequest> =
@@ -151,9 +157,8 @@ class RecognizerDao {
                     val data = ByteArray(sizeInBytes)
                     recorder!!.read(data, 0, sizeInBytes)
                     if (estimatedTime > 60000) { // Audio stream can not exceed 60 seconds
-                        Log.i(LOG_TAG, "stopping recognition")
+                        Log.i(LOG_TAG, "stopping recognition - time out")
                         stopRecognition()
-                        break
                     }
                     request = StreamingRecognizeRequest.newBuilder()
                         .setAudioContent(ByteString.copyFrom(data))
@@ -164,7 +169,7 @@ class RecognizerDao {
         } catch (e: java.lang.Exception) {
             Log.e(LOG_TAG, e.toString())
         }
-        responseObserver!!.onComplete()
+        responseObserver?.onComplete()
     }
 
 }

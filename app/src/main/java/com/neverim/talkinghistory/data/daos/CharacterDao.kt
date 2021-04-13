@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.neverim.talkinghistory.data.models.Edge
 import com.neverim.talkinghistory.data.models.FileLoc
 import com.neverim.talkinghistory.data.models.Vertex
+import com.neverim.talkinghistory.utilities.Constants
 
 class CharacterDao {
 
@@ -13,6 +14,7 @@ class CharacterDao {
 
     private val adjacencies = HashMap<Vertex, ArrayList<Edge>>()
     private val filesList = ArrayList<FileLoc>()
+    private val errorFilesList = ArrayList<FileLoc>()
     private val charList = ArrayList<String>()
     private val edges = ArrayList<Edge>()
     private val questions = ArrayList<Vertex>()
@@ -37,6 +39,10 @@ class CharacterDao {
         filesList.add(FileLoc(nodeId, charName, fileName))
     }
 
+    fun addErrorFile(nodeId: Int, fileName: String) {
+        errorFilesList.add(FileLoc(nodeId, Constants.ERROR, fileName))
+    }
+
     fun createVertex(index: Int, data: String): Vertex {
         val vertex = Vertex(index, data)
         adjacencies[vertex] = ArrayList()
@@ -57,7 +63,13 @@ class CharacterDao {
         edges.clear()
         questions.clear()
         charList.clear()
+        filesList.clear()
         first = null
+    }
+
+    fun clearFileList() {
+        Log.i(LOG_TAG, "clearing file list")
+        filesList.clear()
     }
 
     fun retrieveFirst(): Vertex? {
@@ -84,6 +96,7 @@ class CharacterDao {
     fun getEdges() = mutableEdges as LiveData<ArrayList<Edge>>
     fun getQuestions() = mutableQuestion as LiveData<ArrayList<Vertex>>
     fun getAudioFileList() = filesList
+    fun getErrorAudioFileList() = errorFilesList
     fun getCharList() = charList
 
 }

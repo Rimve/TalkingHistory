@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/round_outline"
         android:outlineProvider="background"
+        android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/iv_dial_speak"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,6 +26,7 @@
         android:layout_marginEnd="20dp"
         android:background="@drawable/speak_outline"
         android:outlineProvider="background"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -46,10 +48,25 @@
         android:id="@+id/iv_dial_mic"
         android:layout_width="250dp"
         android:layout_height="250dp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@+id/iv_dial_speak"
         app:layout_constraintEnd_toEndOf="@+id/iv_dial_speak"
         app:layout_constraintStart_toStartOf="@+id/iv_dial_speak"
         app:layout_constraintTop_toTopOf="@+id/iv_dial_speak"
         app:srcCompat="@drawable/speak_icon" />
+
+    <ProgressBar
+        android:id="@+id/pb_dialogue"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:indeterminate="true"
+        android:scaleType="fitCenter"
+        android:theme="@style/ProgressBarStyle"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
