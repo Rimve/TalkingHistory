@@ -1,14 +1,21 @@
 import React from "react";
 import Modal from 'react-bootstrap/Modal';
 import '../styles/EditModal.css';
+import '../styles/Dialogue.css';
 import ComponentLoadingComponent from "./ComponentLoadingComponent";
 import {getCharacterPicture} from "../services/Utilities";
 import {
-    getCharDescriptionRef,
+    getCharAdjRef,
+    getCharDescriptionRef, getCharFilesRef,
     getCharImageFileRef,
-    getCharImageStorageRef, getNodeOfIdRef
+    getCharImageStorageRef, getCharQuestionsRef, getNodeOfIdRef, getNodesRef, getStorageRef, getUndefinedWordsRef
 } from "../services/DatabaseService";
 import * as BiIcons from "react-icons/bi";
+import {Dialog, DialogActions, DialogTitle, Slide} from "@material-ui/core";
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+    return <Slide direction="up" ref={ref} {...props} />;
+});
 
 class EditCharModal extends React.Component {
     constructor(props) {
@@ -20,6 +27,7 @@ class EditCharModal extends React.Component {
             description: this.props.description,
             showImage: true,
             showUpload: false,
+            showConfirm: false,
             showLoad: true,
             newName: null,
             file: null
@@ -49,8 +57,7 @@ class EditCharModal extends React.Component {
                 this.updateCharacter(this.state.name)
             })
         }
-
-        if (this.state.name !== null) {
+        else if (this.state.name !== null) {
             this.updateCharacter(this.state.name)
         }
         else {
@@ -60,6 +67,11 @@ class EditCharModal extends React.Component {
 
     handleRemove = () => {
         this.removeImage()
+    };
+
+    showDelete = () => {
+        const {showConfirm} = this.state
+        this.setState({showConfirm: !showConfirm})
     };
 
     fileChangeHandler = (event) => {
@@ -151,6 +163,23 @@ class EditCharModal extends React.Component {
         }
     }
 
+    showConfirmation() {
+        const {name} = this.state
+
+        if (this.state.showConfirm) {
+            return (
+                <Dialog open={this.state.showConfirm}
+                        TransitionComponent={Transition}>
+                    <DialogTitle id="alert-dialog-slide-title">Are you sure you want to delete "{name}"?</DialogTitle>
+                    <DialogActions>
+                        <button className='modal-btn cancel-btn' onClick={() => this.showDelete}><b>No</b></button>
+                        <button className='modal-btn' onClick={() => this.deleteCharacter(name)}><b>Yes</b></button>
+                    </DialogActions>
+                </Dialog>
+            )
+        }
+    }
+
     updateCharacter(name) {
         const {file} = this.state
         const {description} = this.state
@@ -161,7 +190,7 @@ class EditCharModal extends React.Component {
                     let results = snapshot.val();
                     if (results !== null) {
                         getCharImageStorageRef(name, results).delete().then(() => {
-                            getCharImageFileRef(name).remove().then()
+                            getCharImageFileRef(name).remove()
                                 .catch((e) => {
                                     console.log(e)
                                 });
@@ -191,8 +220,41 @@ class EditCharModal extends React.Component {
                 .catch((e) => {
                     console.log(e)
                 })
+            this.setState({ show: false });
             this.props.showCallBack(false);
         }
+    }
+
+    deleteCharacter(name) {
+        getCharAdjRef(name).remove()
+            .catch((e) => {
+                console.log(e)
+            })
+        getCharFilesRef(name).remove()
+            .catch((e) => {
+                console.log(e)
+            })
+        getCharQuestionsRef(name).remove()
+            .catch((e) => {
+                console.log(e)
+            })
+        getUndefinedWordsRef(name).remove()
+            .catch((e) => {
+                console.log(e)
+            })
+        getStorageRef(name).delete()
+            .catch((e) => {
+                console.log(e)
+            })
+        getNodesRef().child(name).remove()
+            .then(()=> {
+                alert("Character deleted successfully.")
+                this.setState({ show: false });
+                this.props.showCallBack(false);
+            })
+            .catch((e) => {
+                console.log(e)
+            })
     }
 
     loadComponent() {
@@ -229,12 +291,18 @@ class EditCharModal extends React.Component {
                         </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <button className='modal-btn cancel-btn' onClick={this.handleClose} >
-                            <b>Cancel</b>
+                        <button className='modal-btn delete-btn' onClick={this.showDelete} >
+                            <b>Delete</b>
+                            {this.showConfirmation()}
                         </button>
-                        <button className='modal-btn' onClick={this.handleSubmit}>
-                            <b>Submit</b>
-                        </button>
+                        <div>
+                            <button className='modal-btn cancel-btn' onClick={this.handleClose} >
+                                <b>Cancel</b>
+                            </button>
+                            <button className='modal-btn' onClick={this.handleSubmit}>
+                                <b>Submit</b>
+                            </button>
+                        </div>
                     </Modal.Footer>
                 </Modal>
             </>

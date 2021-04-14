@@ -11,7 +11,7 @@ export function getCharacterPicture(charName, charContainer, loaderContainer, sh
                             .setAttribute('style', 'background-image: url(' + url + ')');
                     }
                     if (document.getElementById(loaderContainer) !== null) {
-                        document.getElementById(loaderContainer).remove();
+                        document.getElementById(loaderContainer).setAttribute('style', 'visibility: collapse');
                     }
                 }).catch((e) => {
                     console.log(e)
@@ -26,9 +26,11 @@ export function getCharacterPicture(charName, charContainer, loaderContainer, sh
 }
 
 function setErrorImage(charContainer, loaderContainer) {
-    document.getElementById(charContainer)
-        .setAttribute('style', 'background-image: url(https://firebasestorage.googleapis.com/v0/b/talkinghistory.appspot.com/o/error.png?alt=media&token=f6195b38-4c88-41bb-8873-8ee97fed783d)');
+    if (document.getElementById(charContainer) !== null) {
+        document.getElementById(charContainer)
+            .setAttribute('style', 'background-image: url(https://firebasestorage.googleapis.com/v0/b/talkinghistory.appspot.com/o/error.png?alt=media&token=f6195b38-4c88-41bb-8873-8ee97fed783d)');
+    }
     if (document.getElementById(loaderContainer) !== null) {
-        document.getElementById(loaderContainer).remove();
+        document.getElementById(loaderContainer).setAttribute('style', 'visibility: collapse');
     }
 }

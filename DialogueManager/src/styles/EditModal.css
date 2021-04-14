@@ -9,6 +9,7 @@
 
 .modal-footer {
     border-top: 1px solid var(--accent-color);
+    justify-content: space-between !important;
 }
 
 .modal-title {
@@ -17,6 +18,10 @@
 
 .modal-body {
     color: var(--accent-color);
+}
+
+.modal-open {
+    overflow: auto;
 }
 
 .close {
@@ -64,6 +69,15 @@ button.close {
     color: var(--main-color);
     background-color: var(--accent-color);
     transform: translateY(2px);
+}
+
+.delete-btn {
+    border: 2px solid transparent;
+    color: #e50808;
+}
+
+.delete-btn:hover {
+    border: 2px solid #e50808;
 }
 
 .cancel-btn {

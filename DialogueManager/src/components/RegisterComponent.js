@@ -3,17 +3,43 @@ import {Form, FormControl} from "react-bootstrap";
 import * as FaIcons from 'react-icons/fa';
 import '../styles/Register.css';
 import {createUser} from "../services/DatabaseService";
+import AlertMassage from "./AlertMessage";
 
 export default class RegisterComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
             input: {},
-            errors: {}
+            errors: {},
+            showSuccessAlert: false,
+            showErrorAlert: false
         };
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    showAlertCallback = (data) => {
+        this.setState({showSuccessAlert: data});
+        this.setState({showErrorAlert: data});
+    };
+
+    showSuccessAlert() {
+        return (
+            <AlertMassage severity={"success"}
+                          message={"Registration successful!"}
+                          show={this.state.showSuccessAlert}
+                          showAlert={this.showAlertCallback} />
+        )
+    }
+
+    showErrorAlert() {
+        return (
+            <AlertMassage severity={"error"}
+                          message={"Make sure you filled all of the fields correctly and try again"}
+                          show={this.state.showErrorAlert}
+                          showAlert={this.showAlertCallback} />
+        )
     }
 
     handleChange(event) {
@@ -31,9 +57,12 @@ export default class RegisterComponent extends Component {
             input["password"] = "";
             input["passwordRpt"] = "";
             input["email"] = "";
-            this.setState({input: input});
+            this.setState({input: input, showSuccessAlert: true});
 
             createUser(this.state.input["email"], this.state.input["password"])
+        }
+        else {
+            this.setState({showErrorAlert: true});
         }
     }
 
@@ -131,6 +160,8 @@ export default class RegisterComponent extends Component {
                         <b>Register</b>
                     </button>
                 </Form>
+                {this.state.showSuccessAlert ? this.showSuccessAlert() : null}
+                {this.state.showErrorAlert ? this.showErrorAlert() : null}
             </div>
         );
     }

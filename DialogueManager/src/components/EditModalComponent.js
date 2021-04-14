@@ -58,12 +58,15 @@ class EditModalComponent extends React.Component {
                                   onChange={this.handleTextChange} className='form-control' rows='3' />
                     </Modal.Body>
                     <Modal.Footer>
-                        <button className='modal-btn cancel-btn' onClick={this.handleClose} >
-                            <b>Cancel</b>
-                        </button>
-                        <button className='modal-btn' onClick={this.handleSubmit}>
-                            <b>Submit</b>
-                        </button>
+                        <div/>
+                        <div>
+                            <button className='modal-btn cancel-btn' onClick={this.handleClose} >
+                                <b>Cancel</b>
+                            </button>
+                            <button className='modal-btn' onClick={this.handleSubmit}>
+                                <b>Submit</b>
+                            </button>
+                        </div>
                     </Modal.Footer>
                 </Modal>
             </>

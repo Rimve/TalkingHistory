@@ -1,0 +1,14 @@
+.MuiDialogTitle-root {
+    background-color: var(--main-color);
+    color: var(--accent-color);
+}
+
+.MuiDialogContent-root {
+    background-color: var(--main-color);
+    color: var(--accent-color);
+}
+
+.MuiDialogActions-root {
+    background-color: var(--main-color);
+    color: var(--accent-color);
+}

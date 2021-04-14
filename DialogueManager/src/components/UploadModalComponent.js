@@ -1,6 +1,7 @@
 import React from "react";
 import Modal from 'react-bootstrap/Modal';
 import '../styles/EditModal.css';
+import AlertMassage from "./AlertMessage";
 
 class UploadModalComponent extends React.Component {
     constructor(props) {
@@ -9,9 +10,15 @@ class UploadModalComponent extends React.Component {
         this.state = {
             show: this.props.show,
             fileType: this.props.type,
-            file: null
+            showAlert: false,
+            file: null,
+            message: null
         };
     }
+
+    showAlertCallback = (data) => {
+        this.setState({showAlert: data});
+    };
 
     handleClose = () => {
         this.setState({ show: false });
@@ -30,7 +37,7 @@ class UploadModalComponent extends React.Component {
             }
             else {
                 event.target.value = null;
-                alert("Audio file format must be MP3")
+                this.setState({message: "Audio file format must be MP3", showAlert: true})
             }
         }
         if (this.handleAcceptableFile() === '.jpg') {
@@ -39,10 +46,19 @@ class UploadModalComponent extends React.Component {
             }
             else {
                 event.target.value = null;
-                alert("Photo file format must be JPG")
+                this.setState({message: "Photo file format must be JPG", showAlert: true})
             }
         }
     };
+
+    showAlert(message) {
+        return (
+            <AlertMassage message={message}
+                          severity={"warning"}
+                          show={this.state.showAlert}
+                          showAlert={this.showAlertCallback} />
+        )
+    }
 
     handleAcceptableFile() {
         if (this.state.fileType === 'audio')
@@ -70,6 +86,7 @@ class UploadModalComponent extends React.Component {
                         </button>
                     </Modal.Footer>
                 </Modal>
+                {this.state.showAlert ? this.showAlert(this.state.message) : null}
             </>
         );
     }

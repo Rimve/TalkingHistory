@@ -15,8 +15,10 @@ import '../styles/CyStyle.css';
 import UploadModalComponent from "./UploadModalComponent";
 import PageLoadingComponent from "./PageLoadingComponent";
 import {ROLES} from "../data/Roles";
+import {Alert, AlertTitle} from "@material-ui/lab";
+import AlertMassage from "./AlertMessage";
 
-class GraphComponent extends React.Component{
+class GraphComponent extends React.Component {
 
     constructor(props){
         super(props);
@@ -32,9 +34,34 @@ class GraphComponent extends React.Component{
             name: "",
             update: false,
             showEdit: false,
-            showUpload: false
+            showUpload: false,
+            showSuccess: false,
+            showFailure: false
         };
     }
+
+    showSuccessAlert() {
+        return (
+            <AlertMassage message={"File uploaded successfully!"}
+                          severity={"success"}
+                          show={this.state.showSuccess}
+                          showAlert={this.showAlertCallback}/>
+        )
+    }
+
+    showFailureAlert() {
+        return (
+            <AlertMassage message={"File uploading failed."}
+                          severity={"error"}
+                          show={this.state.showFailure}
+                          showAlert={this.showAlertCallback}/>
+        )
+    }
+
+    showAlertCallback = (data) => {
+        this.setState({showSuccess: data});
+        this.setState({showFailure: data});
+    };
 
     showEditCallback = (data) => {
         this.setState({showEdit: data});
@@ -75,8 +102,9 @@ class GraphComponent extends React.Component{
             getCharAudioStorageRef(name, file.name).put(file).then((snapshot) => {
                 getCharAudioFileRef(name, nodeToAttachFileTo.id).set(fileName[0]);
             });
+            this.setState({showSuccess: true})
         } else {
-            alert('File upload failed!')
+            this.setState({showFailure: true})
         }
     };
 
@@ -571,6 +599,8 @@ class GraphComponent extends React.Component{
                      }>
                     {this.modalComponent()}
                     {this.uploadComponent()}
+                    {this.state.showSuccess ? this.showSuccessAlert() : null}
+                    {this.state.showFailure ? this.showFailureAlert() : null}
                 </div>
             )
         // }
