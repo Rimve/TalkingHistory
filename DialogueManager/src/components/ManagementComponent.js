@@ -8,6 +8,7 @@ import {getCharacterPicture} from "../services/Utilities";
 import EditCharModal from "./EditCharModal";
 import PageLoadingComponent from "./PageLoadingComponent";
 import {ROLES} from "../data/Roles";
+import AlertMassage from "./AlertMessage";
 
 class ManagementComponent extends React.Component{
     constructor(props){
@@ -17,6 +18,8 @@ class ManagementComponent extends React.Component{
             charList: [],
             loaded: false,
             showEdit: false,
+            showAlert: false,
+            message: null,
             userRole: null,
             name: '',
             description: ''
@@ -25,7 +28,17 @@ class ManagementComponent extends React.Component{
 
     showCallback = (data) => {
         this.setState({showEdit: data, loaded: false});
-    };
+    }
+
+    deleteCallBack = (data) => {
+        if (data) {
+            this.setState({showAlert: true, message: "Character deleted successfully"})
+        }
+    }
+
+    showAlertCallback = (data) => {
+        this.setState({showAlert: data});
+    }
 
     async getCharData() {
         getNodesRef().once('value')
@@ -95,11 +108,21 @@ class ManagementComponent extends React.Component{
         return (
             this.state.showEdit ?
                 <EditCharModal
+                    deleteCallBack={this.deleteCallBack}
                     showCallBack={this.showCallback}
                     description={this.state.description}
                     show={this.state.showEdit}
                     name={this.state.name}
                 /> : null
+        )
+    }
+
+    showAlert(message) {
+        return (
+            <AlertMassage message={message}
+                          severity={"success"}
+                          show={this.state.showAlert}
+                          showAlert={this.showAlertCallback} />
         )
     }
 
@@ -161,6 +184,7 @@ class ManagementComponent extends React.Component{
                         })
                     }
                     {this.showCharacterCreationBtn()}
+                    {this.state.showAlert ? this.showAlert(this.state.message) : null}
                 </div>
             );
         }

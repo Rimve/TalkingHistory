@@ -1,5 +1,5 @@
 import React from 'react';
-import EditModalComponent from "./EditModalComponent";
+import EditNodeModalComponent from "./EditNodeModalComponent";
 import cytoscape from 'cytoscape';
 import cxtmenu from 'cytoscape-cxtmenu';
 import {withRouter} from "react-router-dom";
@@ -548,7 +548,7 @@ class GraphComponent extends React.Component {
     modalComponent() {
         return (
             this.state.showEdit ?
-                <EditModalComponent
+                <EditNodeModalComponent
                     showCallBack={this.showEditCallback}
                     editCallBack={this.handleEdit}
                     show={this.state.showEdit}

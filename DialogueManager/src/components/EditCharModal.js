@@ -7,11 +7,13 @@ import {getCharacterPicture} from "../services/Utilities";
 import {
     getCharAdjRef,
     getCharDescriptionRef, getCharFilesRef,
-    getCharImageFileRef,
-    getCharImageStorageRef, getCharQuestionsRef, getNodeOfIdRef, getNodesRef, getStorageRef, getUndefinedWordsRef
+    getCharImageFileRef, getCharImageStorageRef,
+    getCharQuestionsRef, getNodeOfIdRef,
+    getNodesRef, getStorageRef, getUndefinedWordsRef
 } from "../services/DatabaseService";
 import * as BiIcons from "react-icons/bi";
 import {Dialog, DialogActions, DialogTitle, Slide} from "@material-ui/core";
+import AlertMassage from "./AlertMessage";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
@@ -29,9 +31,15 @@ class EditCharModal extends React.Component {
             showUpload: false,
             showConfirm: false,
             showLoad: true,
+            showAlert: false,
+            message: null,
             newName: null,
             file: null
         };
+    }
+
+    showAlertCallback = (data) => {
+        this.setState({showAlert: data});
     }
 
     showUploadCallback = (data) => {
@@ -180,6 +188,17 @@ class EditCharModal extends React.Component {
         }
     }
 
+    showDeleteButton() {
+        if (this.state.name) {
+            return (
+                <button className='modal-btn delete-btn' onClick={this.showDelete} >
+                    <b>Delete</b>
+                    {this.showConfirmation()}
+                </button>
+            )
+        }
+    }
+
     updateCharacter(name) {
         const {file} = this.state
         const {description} = this.state
@@ -248,9 +267,9 @@ class EditCharModal extends React.Component {
             })
         getNodesRef().child(name).remove()
             .then(()=> {
-                alert("Character deleted successfully.")
-                this.setState({ show: false });
+                this.setState({show: false});
                 this.props.showCallBack(false);
+                this.props.deleteCallBack(true);
             })
             .catch((e) => {
                 console.log(e)
@@ -291,10 +310,7 @@ class EditCharModal extends React.Component {
                         </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <button className='modal-btn delete-btn' onClick={this.showDelete} >
-                            <b>Delete</b>
-                            {this.showConfirmation()}
-                        </button>
+                        {this.showDeleteButton()}
                         <div>
                             <button className='modal-btn cancel-btn' onClick={this.handleClose} >
                                 <b>Cancel</b>

@@ -1,0 +1,11 @@
+.home-image {
+    min-height: calc(100vh - 44px);
+    top: 0;
+    line-height: 1;
+    font-family: 'Orbitron', sans-serif;
+    background-image: url(https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1350&q=80);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    width: 100%;
+}

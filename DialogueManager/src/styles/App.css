@@ -20,17 +20,6 @@
     color: var(--accent-color);
 }
 
-.background-image {
-    min-width: 320px;
-    top: 0;
-    line-height: 1;
-    font-family: 'Orbitron', sans-serif;
-    background-image: url("https://image.freepik.com/free-photo/spare-parts-car_1170-1344.jpg");
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: cover;
-}
-
 .background-gradient {
     background: rgb(46,48,48);
     background: linear-gradient(180deg, rgba(46,48,48,1) 0%, rgba(46,48,48,1) 20%, rgba(0,212,255,1) 100%);

@@ -9,7 +9,10 @@ import PageLoadingComponent from "./PageLoadingComponent";
 import NotFound from "../pages/NotFound";
 import Management from "../pages/Management";
 import Users from "../pages/Users";
-import Words from "../pages/Words";
+import Categories from "../pages/Categories";
+import CategoriesEditor from "../pages/CategoriesEditor";
+import UndefinedEditor from "../pages/UndefinedEditor";
+import AssignCategory from "../pages/AssignCategory";
 
 export default class BodyComponent extends Component {
 
@@ -45,8 +48,17 @@ export default class BodyComponent extends Component {
                         <Route path='/users' render={() =>
                             this.props.authStatus ? <Users/> : <Redirect to='/'/>}
                         />
-                        <Route path='/words' render={() =>
-                            this.props.authStatus ? <Words/> : <Redirect to='/'/>}
+                        <Route path='/categories' render={() =>
+                            this.props.authStatus ? <Categories/> : <Redirect to='/'/>}
+                        />
+                        <Route path='/editor' render={() =>
+                            this.props.authStatus ? <CategoriesEditor/> : <Redirect to='/'/>}
+                        />
+                        <Route path='/uncategorized' render={() =>
+                            this.props.authStatus ? <UndefinedEditor/> : <Redirect to='/'/>}
+                        />
+                        <Route path='/assign' render={() =>
+                            this.props.authStatus ? <AssignCategory/> : <Redirect to='/'/>}
                         />
                         <Route path='*' component={NotFound} />
                     </Switch>

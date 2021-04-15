@@ -5,8 +5,9 @@ import {ROLES} from "../data/Roles";
 import PageLoadingComponent from "../components/PageLoadingComponent";
 import CategorizedWordsComponent from "../components/CategorizedWordsComponent";
 import '../styles/Responsive.css';
+import SelectCategoryComponent from "../components/SelectCategoryComponent";
 
-export default class Words extends Component {
+export default class Categories extends Component {
     constructor(props) {
         super(props);
 
@@ -20,7 +21,7 @@ export default class Words extends Component {
             })
 
         if (this.state.role) {
-            return ((this.state.role !== ROLES.USER) ? <CategorizedWordsComponent /> : <Redirect to='/' />)
+            return ((this.state.role !== ROLES.USER) ? <SelectCategoryComponent /> : <Redirect to='/' />)
         }
         else {
             return (
@@ -34,7 +35,7 @@ export default class Words extends Component {
     render() {
         return (
             <>
-                <div className="table-responsive table-container">
+                <div>
                     {this.showComponent()}
                 </div>
             </>

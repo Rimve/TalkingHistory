@@ -12,8 +12,8 @@ export const MenuData = [
         onClick: () => temp()
     },
     {
-        title: 'Similarities',
-        path: '/words',
+        title: 'Categories',
+        path: '/categories',
         icon: <FaIcons.FaObjectGroup />,
         onClick: () => temp()
     },

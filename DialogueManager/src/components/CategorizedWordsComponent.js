@@ -3,8 +3,9 @@ import {getWordSimilaritiesRef} from "../services/DatabaseService";
 import PageLoadingComponent from "./PageLoadingComponent";
 import '../styles/WordsBody.css';
 import '../styles/EditModal.css';
+import {withRouter} from "react-router-dom";
 
-export default class CategorizedWordsComponent extends Component {
+class CategorizedWordsComponent extends Component {
     constructor(props) {
         super(props);
 
@@ -87,33 +88,37 @@ export default class CategorizedWordsComponent extends Component {
         let similarities = []
         let edit = []
 
-        getWordSimilaritiesRef().once("value")
-            .then((data) => {
-                let results = data.val()
-                for (let entry in results) {
+        if (typeof(this.props.location) !== 'undefined' && this.props.location != null) {
+            const tableName = this.props.location.state.category
+
+            getWordSimilaritiesRef().child(tableName).once("value")
+                .then((data) => {
+                    let results = data.val()
                     const table = {
-                        "tableName": entry,
-                        "values": results[entry],
-                        "count": results[entry].length
+                        "tableName": tableName,
+                        "values": results,
+                        "count": results.length
                     }
+
                     similarities.push(table)
-                    edit[entry] = new Array(results[entry].length).fill(false)
-                }
-                this.setState({
-                    similarities: similarities,
-                    edit: edit
+                    edit[tableName] = new Array(results.length).fill(false)
+
+                    this.setState({
+                        similarities: similarities,
+                        edit: edit
+                    })
                 })
-            })
+        }
     }
 
     render() {
         if (this.state.similarities !== null) {
             return (
-                <>
+                <div className="table-responsive table-container">
                     {this.state.similarities.map((data, index) => {
                         return (
                             <div className="word-container" key={index}>
-                                <h2>Kategorija - {data.tableName}</h2>
+                                <h3>Kategorija - {data.tableName}</h3>
                                 <table className="table table-hover">
                                     <thead className="thead-light">
                                     <tr>
@@ -172,7 +177,7 @@ export default class CategorizedWordsComponent extends Component {
                             </div>
                         )
                     })}
-                </>
+                </div>
             )
         }
         else return (
@@ -182,3 +187,5 @@ export default class CategorizedWordsComponent extends Component {
         )
     }
 }
+
+export default withRouter(CategorizedWordsComponent)

@@ -2,7 +2,7 @@ import React from "react";
 import Modal from 'react-bootstrap/Modal';
 import '../styles/EditModal.css';
 
-class EditModalComponent extends React.Component {
+class EditNodeModalComponent extends React.Component {
     constructor(props) {
         super(props);
 
@@ -74,4 +74,4 @@ class EditModalComponent extends React.Component {
     }
 }
 
-export default EditModalComponent;
+export default EditNodeModalComponent;

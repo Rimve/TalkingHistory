@@ -1,7 +1,7 @@
 .character-container {
     display: flex;
-    width: 80%;
-    height: 100%;
+    align-items: center;
+    margin-top: 80px;
     min-height: calc(100vh - 126px);
     justify-content: center;
     border-left: 1px solid var(--accent-color);
@@ -83,6 +83,14 @@
     background-size: cover;
     background-position: top;
     background-repeat: no-repeat;
+}
+
+.bottom-margin {
+    margin-bottom: 30px;
+}
+
+.drop-down-width {
+    width: 40%;
 }
 
 .edit-button {

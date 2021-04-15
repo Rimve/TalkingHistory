@@ -22,7 +22,7 @@ class AlertMassage extends React.Component {
     }
 
     handleOpen = () => {
-
+        return this.state.show
     }
 
     whichAlert() {
@@ -77,7 +77,7 @@ class AlertMassage extends React.Component {
         return (
             <div>
                 <Snackbar
-                    anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+                    anchorOrigin={{vertical: "top", horizontal: "center"}}
                     open={this.handleOpen}
                     autoHideDuration={3000}
                     onClose={this.handleClose}

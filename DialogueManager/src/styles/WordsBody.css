@@ -5,3 +5,24 @@
 .vertical-align-center {
     vertical-align: center;
 }
+
+.category-entry {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fill-width {
+    width: 100%;
+}
+
+.link-no-deco {
+    text-decoration: none;
+    color: unset;
+}
+
+.link-no-deco:hover {
+    text-decoration: none;
+    color: unset;
+}
