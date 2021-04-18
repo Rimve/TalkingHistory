@@ -13,7 +13,6 @@ import {
 } from "../services/DatabaseService";
 import * as BiIcons from "react-icons/bi";
 import {Dialog, DialogActions, DialogTitle, Slide} from "@material-ui/core";
-import AlertMassage from "./AlertMessage";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
