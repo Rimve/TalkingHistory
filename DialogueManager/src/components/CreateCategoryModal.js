@@ -2,7 +2,7 @@ import React from "react";
 import Modal from 'react-bootstrap/Modal';
 import '../styles/EditModal.css';
 import AlertMassage from "./AlertMessage";
-import {getWordSimilaritiesRef} from "../services/DatabaseService";
+import {getWordSimilaritiesRef} from "../services/FirebaseService";
 
 class CreateCategoryModal extends React.Component {
     constructor(props) {

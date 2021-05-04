@@ -10,7 +10,7 @@ import {
     getCharImageFileRef, getCharImageStorageRef,
     getCharQuestionsRef, getNodeOfIdRef,
     getNodesRef, getStorageRef, getUndefinedWordsRef
-} from "../services/DatabaseService";
+} from "../services/FirebaseService";
 import * as BiIcons from "react-icons/bi";
 import {Dialog, DialogActions, DialogTitle, Slide} from "@material-ui/core";
 

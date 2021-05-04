@@ -14,7 +14,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials
 import com.google.cloud.speech.v1.SpeechSettings
 import com.karumi.dexter.Dexter
 import com.neverim.talkinghistory.R
-import com.neverim.talkinghistory.data.models.PermissionsListener
+import com.neverim.talkinghistory.data.PermissionsListener
 import java.io.*
 import java.util.*
 
@@ -24,34 +24,32 @@ object HelperUtils {
     private val LOG_TAG = this.javaClass.simpleName
 
     suspend fun levDistance(str1: String, str2: String): Int {
-        val dp = Array(str1.length + 1) {
+        val operationMatrix = Array(str1.length + 1) {
             IntArray(
                 str2.length + 1
             )
         }
         for (i in 0..str1.length) {
             for (j in 0..str2.length) {
-                if (i == 0) {
-                    dp[i][j] = j
-                } else if (j == 0) {
-                    dp[i][j] = i
-                } else {
-                    dp[i][j] = minEdits(
-                        dp[i - 1][j - 1] + numOfReplacement(str1[i - 1], str2[j - 1]), // replace
-                        dp[i - 1][j] + 1, // delete
-                        dp[i][j - 1] + 1 // insert
+                if (i == 0) { operationMatrix[i][j] = j }
+                else if (j == 0) { operationMatrix[i][j] = i }
+                else {
+                    operationMatrix[i][j] = minEdits(
+                        operationMatrix[i - 1][j - 1] + numOfReplacement(str1[i - 1], str2[j - 1]), // replace
+                        operationMatrix[i - 1][j] + 1, // delete
+                        operationMatrix[i][j - 1] + 1 // insert
                     )
                 }
             }
         }
-        return dp[str1.length][str2.length]
+        return operationMatrix[str1.length][str2.length]
     }
 
-    private suspend fun numOfReplacement(c1: Char, c2: Char): Int {
+    private fun numOfReplacement(c1: Char, c2: Char): Int {
         return if (c1 == c2) 0 else 1
     }
 
-    private suspend fun minEdits(vararg ints: Int): Int {
+    private fun minEdits(vararg ints: Int): Int {
         return Arrays.stream(ints).min().orElse(Int.MAX_VALUE)
     }
 

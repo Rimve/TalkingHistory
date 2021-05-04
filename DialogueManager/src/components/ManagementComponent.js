@@ -1,5 +1,5 @@
 import React from 'react'
-import {getCharDescriptionRef, getCurrentUserRole, getNodesRef} from "../services/DatabaseService";
+import {getCharDescriptionRef, getCurrentUserRole, getNodesRef} from "../services/FirebaseService";
 import '../styles/CharacterSelection.css';
 import * as FiIcons from 'react-icons/fi';
 import {Link, withRouter} from "react-router-dom";
@@ -140,7 +140,7 @@ class ManagementComponent extends React.Component{
         if (this.state.loaded) {
             const {charList} = this.state;
             return (
-                <div className="character-grid">
+                <div className="character-grid" id="character-grid">
                     {this.showModalComponent()}
                     {
                         charList.map((data, index) => {

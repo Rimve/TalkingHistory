@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {getWordSimilaritiesRef} from "../services/DatabaseService";
+import {getWordSimilaritiesRef} from "../services/FirebaseService";
 import PageLoadingComponent from "./PageLoadingComponent";
 import '../styles/WordsBody.css';
 import '../styles/EditModal.css';

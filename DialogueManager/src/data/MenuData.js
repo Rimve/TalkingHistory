@@ -2,7 +2,7 @@ import React from 'react';
 import * as FaIcons from 'react-icons/fa';
 import * as BiIcons from 'react-icons/bi';
 import '../styles/App.css';
-import {logoutUser} from "../services/DatabaseService";
+import {logoutUser} from "../services/FirebaseService";
 
 export const MenuData = [
     {

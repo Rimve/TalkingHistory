@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import {Form, FormControl} from "react-bootstrap";
 import * as FaIcons from 'react-icons/fa';
 import '../styles/Register.css';
-import {createUser} from "../services/DatabaseService";
+import {firebaseAuthRef, getUserRoleRef} from "../services/FirebaseService";
 import AlertMassage from "./AlertMessage";
+import {ROLES} from "../data/Roles";
 
 export default class RegisterComponent extends Component {
     constructor(props) {
@@ -11,6 +12,7 @@ export default class RegisterComponent extends Component {
         this.state = {
             input: {},
             errors: {},
+            alertMessage: "",
             showSuccessAlert: false,
             showErrorAlert: false
         };
@@ -36,7 +38,7 @@ export default class RegisterComponent extends Component {
     showErrorAlert() {
         return (
             <AlertMassage severity={"error"}
-                          message={"Make sure you filled all of the fields correctly and try again"}
+                          message={this.state.alertMessage}
                           show={this.state.showErrorAlert}
                           showAlert={this.showAlertCallback} />
         )
@@ -57,12 +59,25 @@ export default class RegisterComponent extends Component {
             input["password"] = "";
             input["passwordRpt"] = "";
             input["email"] = "";
-            this.setState({input: input, showSuccessAlert: true});
 
-            createUser(this.state.input["email"], this.state.input["password"])
+            firebaseAuthRef().createUserWithEmailAndPassword(this.state.input["email"], this.state.input["password"])
+                .then((userCred) => {
+                    getUserRoleRef(userCred.user.uid).child("role").set(ROLES.USER)
+                    getUserRoleRef(userCred.user.uid).child("email").set(this.state.input["email"])
+                    this.setState({input: input, showSuccessAlert: true});
+                })
+                .catch(() => {
+                    this.setState({
+                        alertMessage: "User with this email already exists",
+                        showErrorAlert: true
+                    });
+                })
         }
         else {
-            this.setState({showErrorAlert: true});
+            this.setState({
+                alertMessage: "Make sure you filled all of the fields correctly and try again",
+                showErrorAlert: true
+            });
         }
     }
 
@@ -117,7 +132,7 @@ export default class RegisterComponent extends Component {
         return isValid;
     }
 
-    render () {
+    render() {
         return (
             <div className='register-container margin-top container-shadow'>
                 <Form className='form-register' onSubmit={this.handleSubmit}>

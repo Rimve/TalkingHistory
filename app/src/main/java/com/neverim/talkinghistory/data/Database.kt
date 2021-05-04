@@ -1,18 +1,14 @@
 package com.neverim.talkinghistory.data
 
-import com.neverim.talkinghistory.data.daos.CharacterDao
-import com.neverim.talkinghistory.data.daos.RecognizerDao
-import com.neverim.talkinghistory.data.daos.StorageDao
-
 class Database private constructor() {
 
-    var characterDao = CharacterDao()
+    var characterDao: CharacterDao = CharacterDao()
         private set
 
-    var recognizerDao = RecognizerDao()
+    var recognizerDao: RecognizerDao = RecognizerDao()
         private set
 
-    var storageDao = StorageDao()
+    var storageDao: StorageDao = StorageDao()
         private set
 
     companion object {

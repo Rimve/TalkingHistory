@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {getCurrentUserRole} from "../services/DatabaseService";
+import {getCurrentUserRole} from "../services/FirebaseService";
 import {Redirect} from "react-router-dom";
 import {ROLES} from "../data/Roles";
 import PageLoadingComponent from "../components/PageLoadingComponent";

@@ -1,4 +1,4 @@
-import {getCharImageFileRef, getCharImageStorageRef} from "./DatabaseService";
+import {getCharImageFileRef, getCharImageStorageRef} from "./FirebaseService";
 
 export function getCharacterPicture(charName, charContainer, loaderContainer, show) {
     if (show) {

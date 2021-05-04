@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {getWordSimilaritiesRef} from "../services/DatabaseService";
+import {getWordSimilaritiesRef} from "../services/FirebaseService";
 import PageLoadingComponent from "./PageLoadingComponent";
 import {Link, withRouter} from "react-router-dom";
 import CreateCategoryModal from "./CreateCategoryModal";
@@ -136,7 +136,6 @@ class SelectCategoryComponent extends Component {
                                                     <button key={"delete-cat-btn-"+index} onClick={() => this.showDelete(data)}
                                                             className="modal-btn delete-btn">
                                                             Delete
-                                                        {this.showConfirmation()}
                                                     </button>
                                                 </span>
                                             </li>
@@ -152,6 +151,7 @@ class SelectCategoryComponent extends Component {
                                     <b>+</b>
                                 </button>
                             </ul>
+                            {this.showConfirmation()}
                         </div>
                         {this.state.showAlert ? this.showAlert(this.state.message) : null}
                     </div>

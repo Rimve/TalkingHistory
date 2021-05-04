@@ -5,7 +5,8 @@ import * as FaIcons from 'react-icons/fa';
 import {Form, FormControl} from "react-bootstrap";
 import 'firebaseui/dist/firebaseui.css';
 import '../styles/Login.css';
-import {loginUser} from "../services/DatabaseService";
+import {firebaseAuthRef} from "../services/FirebaseService";
+import AlertMassage from "./AlertMessage";
 
 class LoginComponent extends Component {
 
@@ -14,11 +15,25 @@ class LoginComponent extends Component {
 
         this.state = {
             email: "",
-            password: ""
+            password: "",
+            showAlert: false
         };
 
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
+    }
+
+    showAlertCallback = (data) => {
+        this.setState({showAlert: data});
+    }
+
+    showErrorAlert() {
+        return (
+            <AlertMassage message={"Login failed, please check your credentials"}
+                          severity={"error"}
+                          show={this.state.showAlert}
+                          showAlert={this.showAlertCallback} />
+        )
     }
 
     handleChange(event) {
@@ -31,7 +46,10 @@ class LoginComponent extends Component {
         event.preventDefault();
         const { email, password } = this.state;
 
-        loginUser(email, password);
+        firebaseAuthRef().signInWithEmailAndPassword(email, password)
+            .catch(() => {
+                this.setState({showAlert: true})
+            });
     }
 
     render() {
@@ -45,6 +63,7 @@ class LoginComponent extends Component {
                         <b>Login</b>
                     </button>
                 </Form>
+                {this.state.showAlert ? this.showErrorAlert() : null}
             </div>
         );
     }

@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name=".ui.TalkingHistory"
+        android:name=".TalkingHistory"
         android:allowBackup="true"
         android:icon="@mipmap/ic_app_logo"
         android:label="@string/app_name"
@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ui.SplashActivity"
+            android:name=".views.SplashActivity"
             android:label="@string/app_name"
             android:theme="@style/SplashTheme">
             <intent-filter>
@@ -25,8 +25,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.SelectorActivity" />
-        <activity android:name=".ui.DialogueActivity" android:parentActivityName=".ui.SelectorActivity"/>
+        <activity android:name=".views.SelectorActivity" />
+        <activity android:name=".views.DialogueActivity" android:parentActivityName=".views.SelectorActivity"/>
     </application>
 
 </manifest>

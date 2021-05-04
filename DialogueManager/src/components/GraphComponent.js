@@ -9,7 +9,7 @@ import {
     getDstNode, getCharQuestionsRef,
     getCharQuestionOfIdRef, getCharAudioStorageRef,
     getCharAudioFileRef, getCurrentUserRole
-} from "../services/DatabaseService";
+} from "../services/FirebaseService";
 import "firebase/database";
 import '../styles/CyStyle.css';
 import UploadModalComponent from "./UploadModalComponent";
@@ -545,7 +545,7 @@ class GraphComponent extends React.Component {
         return nodes.find((node) => node.data.id === nodeToFind);
     }
 
-    modalComponent() {
+    editModalComponent() {
         return (
             this.state.showEdit ?
                 <EditNodeModalComponent
@@ -557,7 +557,7 @@ class GraphComponent extends React.Component {
         )
     }
 
-    uploadComponent() {
+    uploadModalComponent() {
         return (
             this.state.showUpload ?
                 <UploadModalComponent
@@ -597,8 +597,8 @@ class GraphComponent extends React.Component {
                              e.stopPropagation();
                          }
                      }>
-                    {this.modalComponent()}
-                    {this.uploadComponent()}
+                    {this.editModalComponent()}
+                    {this.uploadModalComponent()}
                     {this.state.showSuccess ? this.showSuccessAlert() : null}
                     {this.state.showFailure ? this.showFailureAlert() : null}
                 </div>

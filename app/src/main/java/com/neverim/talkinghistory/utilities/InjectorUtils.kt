@@ -1,12 +1,12 @@
 package com.neverim.talkinghistory.utilities
 
 import com.neverim.talkinghistory.data.Database
-import com.neverim.talkinghistory.data.repositories.CharacterRepository
-import com.neverim.talkinghistory.data.repositories.RecognizerRepository
-import com.neverim.talkinghistory.data.repositories.StorageRepository
-import com.neverim.talkinghistory.ui.viewmodels.CharacterViewModelFactory
-import com.neverim.talkinghistory.ui.viewmodels.RecognizerViewModelFactory
-import com.neverim.talkinghistory.ui.viewmodels.StorageViewModelFactory
+import com.neverim.talkinghistory.data.CharacterRepository
+import com.neverim.talkinghistory.data.RecognizerRepository
+import com.neverim.talkinghistory.data.StorageRepository
+import com.neverim.talkinghistory.viewmodels.CharacterViewModelFactory
+import com.neverim.talkinghistory.viewmodels.RecognizerViewModelFactory
+import com.neverim.talkinghistory.viewmodels.StorageViewModelFactory
 
 object InjectorUtils {
 

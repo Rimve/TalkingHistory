@@ -9,7 +9,7 @@ export default class FooterComponent extends Component {
     loadPage() {
         if (this.props.authStatus != null) {
             return (
-                <div className='footer'>
+                <div className='footer' id="footer">
                     <div className='footer-relative'>
                         <span className='color-accent'>Dialogue manager for android application</span>
                         <strong className='color-accent font-italic'> TalkingHistory</strong>
