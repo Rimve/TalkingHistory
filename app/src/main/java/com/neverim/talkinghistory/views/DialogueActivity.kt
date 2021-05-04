@@ -101,30 +101,6 @@ class DialogueActivity : AppCompatActivity() {
         Log.e(LOG_TAG, "on destroy")
     }
 
-//    override fun onStop() {
-//        super.onStop()
-//        stopActivity()
-//        Log.e(LOG_TAG, "on stopped")
-//    }
-//
-//    override fun onRestart() {
-//        super.onRestart()
-//        stopActivity()
-//        if (selectedChar != null) {
-//            initializeUi(selectedChar!!)
-//        }
-//        Log.e(LOG_TAG, "on restart")
-//    }
-//
-//    override fun onResume() {
-//        super.onResume()
-//        stopActivity()
-//        if (selectedChar != null) {
-//            initializeUi(selectedChar!!)
-//        }
-//        Log.e(LOG_TAG, "on resume")
-//    }
-
     private fun handleLoaderVisibility() {
         progressBar.visibility = View.INVISIBLE
         textView.visibility = View.INVISIBLE

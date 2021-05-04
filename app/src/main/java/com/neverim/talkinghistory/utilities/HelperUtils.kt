@@ -23,7 +23,7 @@ object HelperUtils {
 
     private val LOG_TAG = this.javaClass.simpleName
 
-    suspend fun levDistance(str1: String, str2: String): Int {
+    fun levDistance(str1: String, str2: String): Int {
         val operationMatrix = Array(str1.length + 1) {
             IntArray(
                 str2.length + 1

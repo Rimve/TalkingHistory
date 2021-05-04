@@ -21,7 +21,6 @@ class CharacterViewModel(private val characterRepository: CharacterRepository) :
     fun fetchCharListFromDb(callbackI: IDatabaseCallback) = characterRepository.fetchCharListFromDb(callbackI)
     fun createVertex(index: Int, data: String) = characterRepository.createVertex(index, data)
     fun addDirectedEdge(source: Vertex, destination: Vertex) = characterRepository.addDirectedEdge(source, destination)
-    fun addUndirectedEdge(source: Vertex, destination: Vertex) = characterRepository.addUndirectedEdge(source, destination)
     fun clear() = characterRepository.clear()
     fun edges(source: Vertex) = characterRepository.edges(source)
     fun edgesWithoutUiUpdate(source: Vertex) = characterRepository.edgesWithoutUi(source)
