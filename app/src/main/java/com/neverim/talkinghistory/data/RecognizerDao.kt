@@ -56,6 +56,11 @@ class RecognizerDao {
         }
     }
 
+    fun clear() {
+        recorder = null
+        mutableTranscription.value = null
+    }
+
     fun startRecognition(context: Context) {
         isRecognizing = true
         CoroutineScope(Dispatchers.Default).launch {

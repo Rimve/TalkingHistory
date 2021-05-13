@@ -26,5 +26,6 @@ class CharacterViewModel(private val characterRepository: CharacterRepository) :
     fun edgesWithoutUiUpdate(source: Vertex) = characterRepository.edgesWithoutUi(source)
     fun getQuestions() = characterRepository.getQuestions()
     fun retrieveFirst(): Vertex? = characterRepository.retrieveFirst()
+    fun clearVM() = onCleared()
 
 }

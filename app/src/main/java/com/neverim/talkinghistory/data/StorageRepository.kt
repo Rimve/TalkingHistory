@@ -5,7 +5,7 @@ import android.util.Log
 import java.io.File
 
 
-class StorageRepository private constructor(private val storageDao: StorageDao) {
+class StorageRepository constructor(private val storageDao: StorageDao) {
 
     private val LOG_TAG = this.javaClass.simpleName
 
@@ -54,13 +54,17 @@ class StorageRepository private constructor(private val storageDao: StorageDao) 
     // Return the set live data that is being observed by view
     fun getAudio() = storageDao.getAudio()
 
-
-    companion object {
-        @Volatile private var instance: StorageRepository? = null
-
-        fun getInstance(storageDao: StorageDao) =
-            instance ?: synchronized(this) {
-                instance ?: StorageRepository(storageDao).also { instance = it }
-            }
+    fun clear() {
+        storageDao.clear()
     }
+
+
+//    companion object {
+//        @Volatile private var instance: StorageRepository? = null
+//
+//        fun getInstance(storageDao: StorageDao) =
+//            instance ?: synchronized(this) {
+//                instance ?: StorageRepository(storageDao).also { instance = it }
+//            }
+//    }
 }

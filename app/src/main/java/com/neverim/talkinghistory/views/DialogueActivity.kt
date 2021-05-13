@@ -1,6 +1,7 @@
 package com.neverim.talkinghistory.views
 
 import android.content.Context
+import android.content.Intent
 import android.media.MediaPlayer
 import android.net.ConnectivityManager
 import android.net.Network
@@ -17,10 +18,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.neverim.talkinghistory.R
 import com.neverim.talkinghistory.adapters.EdgeArrayAdapter
 import com.neverim.talkinghistory.data.*
-import com.neverim.talkinghistory.viewmodels.*
 import com.neverim.talkinghistory.utilities.Constants
 import com.neverim.talkinghistory.utilities.HelperUtils
 import com.neverim.talkinghistory.utilities.InjectorUtils
+import com.neverim.talkinghistory.viewmodels.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,6 +86,9 @@ class DialogueActivity : AppCompatActivity() {
         speakImage = findViewById(R.id.iv_dial_speak)
 
         selectedChar = intent.getStringExtra("char")
+        listeningCircle.animate().alpha(0.0f)
+
+        Log.i(LOG_TAG, "selectedChar: $selectedChar")
 
         HelperUtils.checkPermissions(this)
 
@@ -95,18 +99,33 @@ class DialogueActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        CoroutineScope(Dispatchers.Default).launch {
-            stopActivity()
-        }
-        Log.e(LOG_TAG, "on destroy")
+        stopActivity()
+        Log.i(LOG_TAG, "on destroy")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stopActivity()
+        Log.i(LOG_TAG, "on stopped")
     }
 
     private fun handleLoaderVisibility() {
         progressBar.visibility = View.INVISIBLE
         textView.visibility = View.INVISIBLE
-        listeningCircle.visibility = View.VISIBLE
         micImage.visibility = View.VISIBLE
         speakImage.visibility = View.VISIBLE
+    }
+
+    private fun showMicAnimation() {
+        CoroutineScope(Dispatchers.Main).launch {
+            listeningCircle.animate().alpha(1.0f)
+        }
+    }
+
+    private fun hideMicAnimation() {
+        CoroutineScope(Dispatchers.Main).launch {
+            listeningCircle.animate().alpha(0.0f)
+        }
     }
 
     private fun initializeUi(charName: String) {
@@ -138,6 +157,7 @@ class DialogueActivity : AppCompatActivity() {
 
     private fun startRecognition(charName: String) {
         recognizerViewModel.startRecognition(this)
+        showMicAnimation()
         CoroutineScope(Dispatchers.Default).launch {
             Log.i(LOG_TAG, "starting routine scope")
             while (recognizerViewModel.isRecognizing()) {
@@ -152,17 +172,22 @@ class DialogueActivity : AppCompatActivity() {
     private fun stopRecognition() {
         Log.i(LOG_TAG, "stopRecognition() called")
         recognizerViewModel.stopRecognition()
+        hideMicAnimation()
     }
 
     private suspend fun handleDialogue(charName: String) {
         // Finding the most relevant edge according to the answer using Levenshtein distance
         val mostRelevantEdge = findEdgeWithLowestScore(answer!!.toLowerCase(locale))
-        if (mostRelevantEdge != null) {
+        if (mostRelevantEdge != null && this::currentQuestion.isInitialized) {
             Log.i(LOG_TAG, "found most suitable answer: $answer")
             // Stop recognition after answer to bypass 1 minute stream limit
             stopRecognition()
             // Change dialogue entry according to the most relevant answer
-            changeQuestion(mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(mostRelevantEdge.destination))
+            changeQuestion(
+                mostRelevantEdge, characterViewModel.edgesWithoutUiUpdate(
+                    mostRelevantEdge.destination
+                )
+            )
             // Play the audio file attached to this question
             playCurrentQuestion(charName)
             // Change the edges according to the question so the observer would update UI
@@ -203,7 +228,11 @@ class DialogueActivity : AppCompatActivity() {
         // Otherwise no similar answer was found - user must repeat
         else {
             if (transcript != null) {
-                characterViewModel.insertUncategorizedWord(selectedChar!!, currentQuestion, transcript)
+                characterViewModel.insertUncategorizedWord(
+                    selectedChar!!,
+                    currentQuestion,
+                    transcript
+                )
             }
             playErrorAudio()
             answer = null
@@ -238,7 +267,17 @@ class DialogueActivity : AppCompatActivity() {
             override fun onResponse(response: DatabaseResponse) {
                 if (response.data != null) {
                     fileList = response.data as ArrayList<FileLoc>
-                    playCurrentQuestion(selectedChar!!)
+                    CoroutineScope(Dispatchers.Default).launch {
+                        while (true) {
+                            if (this@DialogueActivity::currentQuestion.isInitialized) {
+                                playCurrentQuestion(selectedChar!!)
+                                break
+                            }
+                            else {
+                                Log.i(LOG_TAG, "currentQuestion is not initialized")
+                            }
+                        }
+                    }
                 }
             }
         }, charName)
@@ -283,22 +322,30 @@ class DialogueActivity : AppCompatActivity() {
                 Log.i(LOG_TAG, "audio observer - file changed")
                 stopRecognition()
                 playAudioFile(audioFile)
-                if (checkIfEnd()) {
+                if (this::currentQuestion.isInitialized && checkIfEnd()) {
                     storageViewModel.getAudio().removeObservers(this@DialogueActivity)
                 }
             }
         })
     }
 
-    private suspend fun stopActivity() {
-        withContext(Dispatchers.Main) {
-            endOfDialogue = true
-            edgeArray.clear()
-            recognizerViewModel.stopRecognition()
-            characterViewModel.getAdjacencies().removeObservers(this@DialogueActivity)
-            characterViewModel.getEdges().removeObservers(this@DialogueActivity)
-            recognizerViewModel.getTranscript().removeObservers(this@DialogueActivity)
-        }
+    private fun stopActivity() {
+        endOfDialogue = true
+        edgeArray.clear()
+        recognizerViewModel.stopRecognition()
+        characterViewModel.getAdjacencies().removeObservers(this@DialogueActivity)
+        characterViewModel.getEdges().removeObservers(this@DialogueActivity)
+        recognizerViewModel.getTranscript().removeObservers(this@DialogueActivity)
+        storageViewModel.getAudio().removeObservers(this@DialogueActivity)
+        characterViewModel.clear()
+        storageViewModel.clear()
+        recognizerViewModel.clear()
+        characterViewModel.clearVM()
+        recognizerViewModel.clearVM()
+        storageViewModel.clearVM()
+        mediaPlayer.release()
+        this@DialogueActivity.finish()
+        Log.i(LOG_TAG, "stopped activity")
     }
 
     private fun playAudioFile(audioFile: File) {
@@ -320,7 +367,10 @@ class DialogueActivity : AppCompatActivity() {
     }
 
     private fun playCurrentQuestion(charName: String) {
-        getFileLocByVertex(currentQuestion)?.let { fileLoc ->  storageViewModel.getAudioFile(charName, fileLoc) }
+        getFileLocByVertex(currentQuestion)?.let { fileLoc ->  storageViewModel.getAudioFile(
+            charName,
+            fileLoc
+        ) }
     }
 
     private fun getFileLocByVertex(node: Vertex): FileLoc? {
@@ -362,7 +412,11 @@ class DialogueActivity : AppCompatActivity() {
                 similaritiesMap[myKey]?.forEach { similarWord ->
                     // Calculate the minimum distance between transcript and similar words
                     // of available categories
-                    val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
+                    val dst = HelperUtils.levDistance(
+                        similarWord.toLowerCase(locale), word.toLowerCase(
+                            locale
+                        )
+                    )
                     // If we found lower scored word - it will be our answer
                     if (lowestDst > dst) {
                         lowestDst = dst
@@ -375,7 +429,11 @@ class DialogueActivity : AppCompatActivity() {
                 // Check if it belongs to the specific word category "Kiti"
                 similaritiesMap[Constants.WORD_OTHER]?.forEach { similarWord ->
                     if (myKey == similarWord) {
-                        val dst = HelperUtils.levDistance(similarWord.toLowerCase(locale), word.toLowerCase(locale))
+                        val dst = HelperUtils.levDistance(
+                            similarWord.toLowerCase(locale), word.toLowerCase(
+                                locale
+                            )
+                        )
                         if (lowestDst > dst) {
                             lowestDst = dst
                             possibleAnswer = myKey.toLowerCase(locale)

@@ -13,4 +13,7 @@ class StorageViewModel(private val storageRepository: StorageRepository): ViewMo
         storageRepository.fetchAudioFile(charName, fileNode)
     fun getImageFile(callbackI: IDatabaseCallback, charName: String, fileName: String?) =
         storageRepository.getImageFile(callbackI, charName, fileName)
+    fun clear() = storageRepository.clear()
+    fun clearVM() = onCleared()
+
 }

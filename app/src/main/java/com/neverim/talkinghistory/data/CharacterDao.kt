@@ -61,6 +61,7 @@ class CharacterDao {
         questions.clear()
         charList.clear()
         filesList.clear()
+        errorFilesList.clear()
         first = null
     }
 

@@ -11,5 +11,7 @@ class RecognizerViewModel(private val recognizerRepo: RecognizerRepository) : Vi
     fun stopRecognition() = recognizerRepo.stopRecognition()
     fun isRecognizing() = recognizerRepo.isRecognizing()
     fun getTranscript() = recognizerRepo.getTranscript()
+    fun clear() = recognizerRepo.clear()
+    fun clearVM() = onCleared()
 
 }

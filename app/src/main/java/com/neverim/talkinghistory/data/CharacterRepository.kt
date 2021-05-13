@@ -5,7 +5,7 @@ import com.google.firebase.database.*
 import com.neverim.talkinghistory.utilities.Constants
 
 
-class CharacterRepository private constructor(private val characterDao: CharacterDao) {
+class CharacterRepository constructor(private val characterDao: CharacterDao) {
 
     private val LOG_TAG = this.javaClass.simpleName
 
@@ -316,13 +316,13 @@ class CharacterRepository private constructor(private val characterDao: Characte
         }
     }
 
-    companion object {
-        @Volatile private var instance: CharacterRepository? = null
-
-        fun getInstance(adjacenciesDao: CharacterDao) =
-            instance ?: synchronized(this) {
-                instance ?: CharacterRepository(adjacenciesDao).also { instance = it }
-            }
-    }
+//    companion object {
+//        @Volatile private var instance: CharacterRepository? = null
+//
+//        fun getInstance(adjacenciesDao: CharacterDao) =
+//            instance ?: synchronized(this) {
+//                instance ?: CharacterRepository(adjacenciesDao).also { instance = it }
+//            }
+//    }
 
 }

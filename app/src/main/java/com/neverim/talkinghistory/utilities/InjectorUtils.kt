@@ -11,7 +11,7 @@ import com.neverim.talkinghistory.viewmodels.StorageViewModelFactory
 object InjectorUtils {
 
     fun provideCharacterViewModelFactory(): CharacterViewModelFactory {
-        val adjacenciesRepository = CharacterRepository.getInstance(Database.getInstance().characterDao)
+        val adjacenciesRepository = CharacterRepository(Database.getInstance().characterDao)
         return CharacterViewModelFactory(adjacenciesRepository)
     }
 
@@ -21,7 +21,7 @@ object InjectorUtils {
     }
 
     fun provideStorageViewModelFactory(): StorageViewModelFactory {
-        val storageRepository = StorageRepository.getInstance(Database.getInstance().storageDao)
+        val storageRepository = StorageRepository(Database.getInstance().storageDao)
         return StorageViewModelFactory(storageRepository)
     }
 

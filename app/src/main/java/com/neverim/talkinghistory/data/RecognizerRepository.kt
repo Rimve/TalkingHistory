@@ -10,5 +10,6 @@ class RecognizerRepository constructor(private val recognizerDao: RecognizerDao)
     fun stopRecognition() = recognizerDao.stopRecognition()
     fun isRecognizing() = recognizerDao.isRecognizing()
     fun getTranscript() = recognizerDao.getTranscript()
+    fun clear() = recognizerDao.clear()
 
 }

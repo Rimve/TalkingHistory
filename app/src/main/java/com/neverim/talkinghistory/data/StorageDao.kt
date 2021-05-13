@@ -24,6 +24,11 @@ class StorageDao {
         mutableAudioFile.value = file
     }
 
+    fun clear() {
+        mutableImageFile.value = null
+        mutableAudioFile.value = null
+    }
+
     fun getImage() = mutableImageFile as LiveData<File>
     fun getAudio() = mutableAudioFile as LiveData<File>
 }
