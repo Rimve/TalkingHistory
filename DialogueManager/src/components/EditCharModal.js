@@ -203,7 +203,7 @@ class EditCharModal extends React.Component {
         const {description} = this.state
 
         if (name !== null) {
-            if (file === null) {
+            if (file === null && document.getElementById('character-edit-container').style.backgroundImage === 'none') {
                 getCharImageFileRef(name).once('value').then((snapshot) => {
                     let results = snapshot.val();
                     if (results !== null) {
@@ -220,7 +220,7 @@ class EditCharModal extends React.Component {
                     console.log(e)
                 });
             }
-            else {
+            if (file !== null) {
                 let fileName = 'picture';
                 getCharImageStorageRef(name, fileName).put(file).then((snapshot) => {
                     getCharImageFileRef(name).set(fileName).then(() => {

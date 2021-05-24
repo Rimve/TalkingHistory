@@ -409,6 +409,7 @@ class GraphComponent extends React.Component {
     }
 
     removeNode(id) {
+        const {questionNodeIds} = this.state;
         const {nodes} = this.state;
         const {name} = this.state;
 
@@ -438,6 +439,7 @@ class GraphComponent extends React.Component {
             }
         });
 
+        this.removeNodeAsQuestion(name, nodeToDelete);
         this.removeNodeFromDb(name, nodeToDelete);
         this.removeSrcAdjFromDb(name, nodeToDelete);
 

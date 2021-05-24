@@ -41,8 +41,8 @@ class ManageUncategorizedComponent extends Component {
             return (
                 <FormControl className='drop-down-width'>
                     <InputLabel>Assign category</InputLabel>
-                    <Select id={id} defaultValue={''} value={''} onChange={(e) =>
-                        this.handleNewCatChange(e, word, id)}>
+                    <Select id={id} defaultValue={''} value={''}
+                            onChange={(e) => this.handleNewCatChange(e, word, id)}>
                         {
                             this.state.categories.map((data, index)=> {
                                 return (
@@ -76,7 +76,7 @@ class ManageUncategorizedComponent extends Component {
             getUndefinedWordRef().child(tableName).once("value")
                 .then((data) => {
                     let results = data.val()
-
+                    console.log(results)
                     for (let words in results) {
                         for (let word in results[words]) {
                             if (!uncategorizedWords.includes(results[words][word])) {
@@ -97,21 +97,34 @@ class ManageUncategorizedComponent extends Component {
     render() {
         if (this.state.loaded) {
             return (
-                <div className="character-container bottom-margin">
-                    <div className="character-list">
-                        <ul className="list-group">
-                            {
-                                this.state.uncategorizedWords.map((data, index) => {
-                                    return (
-                                        <li className='category-entry character-item' key={index}>
-                                            {data}
-                                            {this.showSelect(data, "dropdown-"+index)}
-                                        </li>
-                                    )
-                                })
-                            }
-                        </ul>
-                    </div>
+                <div className="table-responsive table-container bottom-margin top-margin">
+                    <table className="table table-hover">
+                        <thead className="thead-light">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Sentence</th>
+                            <th scope="col" colSpan="2">Assign</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {this.state.uncategorizedWords.map((data, index) => {
+                            return (
+                                <tr key={index}>
+                                    <th scope="row">{index}</th>
+                                    <td className="uncatgorized-text">
+                                        {data}
+                                    </td>
+                                    <td>
+                                        {this.showSelect(data, "dropdown-"+index)}
+                                    </td>
+                                    <td>
+
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                        </tbody>
+                    </table>
                 </div>
             )
         }

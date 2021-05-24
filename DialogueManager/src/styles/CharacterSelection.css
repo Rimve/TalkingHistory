@@ -15,6 +15,7 @@
 .character-grid {
     flex: 1;
     display: grid;
+    justify-content: center;
     margin-top: 60px;
     grid-template-columns: repeat(5, auto);
 }
@@ -27,6 +28,8 @@
     justify-content: center;
     padding-bottom: 2px;
     padding-left: 2px;
+    max-width: 250px;
+    min-width: 228px;
     width: 90%;
     height: fit-content;
     border-radius: 20px;
@@ -91,8 +94,12 @@
     margin-bottom: 30px;
 }
 
+.top-margin {
+    margin-top: 60px;
+}
+
 .drop-down-width {
-    width: 40%;
+    width: 100%;
 }
 
 .edit-button {
@@ -162,14 +169,14 @@
     .character-grid {
         grid-template-columns: repeat(4, auto);
     }
-    @media screen and (max-width: 1350px) {
+    @media screen and (max-width: 950px) {
         .character-grid {
-            grid-template-columns: repeat(3, auto);
+            grid-template-columns: repeat(2, auto);
         }
 
         @media screen and (max-width: 600px) {
             .character-grid {
-                grid-template-columns: repeat(2, auto);
+                grid-template-columns: repeat(1, auto);
             }
 
             @media screen and (max-width: 370px) {

@@ -57,7 +57,8 @@ class SelectCategoryComponent extends Component {
                 this.setState({
                     categories: this.state.categories.filter(function(cat) {return cat !== category}),
                     message: "Category '"+category+"' has been deleted",
-                    showAlert: true
+                    showAlert: true,
+                    showConfirm: false
                 })
             })
     }

@@ -4,6 +4,7 @@ import PageLoadingComponent from "./PageLoadingComponent";
 import '../styles/WordsBody.css';
 import '../styles/EditModal.css';
 import {withRouter} from "react-router-dom";
+import AlertMassage from "./AlertMessage";
 
 class CategorizedWordsComponent extends Component {
     constructor(props) {
@@ -13,12 +14,17 @@ class CategorizedWordsComponent extends Component {
             similarities: null,
             newWord: null,
             updatedWord: null,
+            showAlert: false,
             edit: []
         }
     }
 
     handleNewWordChange = (event) => this.setState({newWord: event.target.value})
     handleUpdatedWordChange = (event) => this.setState({updatedWord: event.target.value})
+
+    showAlertCallback = (data) => {
+        this.setState({showAlert: data});
+    }
 
     handleEditButton(category, index) {
         const {edit} = this.state
@@ -31,22 +37,34 @@ class CategorizedWordsComponent extends Component {
     handleSaveButton(category, index, word) {
         const {similarities} = this.state
 
-        getWordSimilaritiesRef().child(category)
-            .child(index.toString())
-            .set(word)
-            .then(() => {
-                for (let entry in similarities) {
-                    if (similarities[entry].tableName === category) {
-                        let tmpSimilarities = similarities
-                        tmpSimilarities[entry].values[index] = word
-                        this.setState({
-                            similarities: tmpSimilarities,
-                            updatedWord: null
-                        })
-                    }
-                }
-            })
-            .catch((error) => {console.log(error.message)})
+        if (word) {
+            if (word.length > 1) {
+                getWordSimilaritiesRef().child(category)
+                    .child(index.toString())
+                    .set(word)
+                    .then(() => {
+                        for (let entry in similarities) {
+                            if (similarities[entry].tableName === category) {
+                                let tmpSimilarities = similarities
+                                tmpSimilarities[entry].values[index] = word
+                                this.setState({
+                                    similarities: tmpSimilarities,
+                                    updatedWord: null
+                                })
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.log(error.message)
+                    })
+            }
+            else {
+                this.setState({
+                    showAlert: true,
+                    updatedWord: null
+                })
+            }
+        }
     }
 
     deleteWord(category, index) {
@@ -69,19 +87,33 @@ class CategorizedWordsComponent extends Component {
     addWordTo(category, count, word) {
         const {similarities} = this.state
 
-        let index = count++
-        getWordSimilaritiesRef().child(category)
-            .child(index.toString())
-            .set(word)
-            .then(() => {
-                for (let entry in similarities) {
-                    if (similarities[entry].tableName === category) {
-                        similarities[entry].values.push(word)
+        if (word && word.length > 1) {
+            let index = count++
+            getWordSimilaritiesRef().child(category)
+                .child(index.toString())
+                .set(word)
+                .then(() => {
+                    for (let entry in similarities) {
+                        if (similarities[entry].tableName === category) {
+                            similarities[entry].values.push(word)
+                        }
                     }
-                }
-            })
-            .catch((error) => {console.log(error.message)})
-        this.setState({similarities: similarities})
+                })
+                .catch((error) => {console.log(error.message)})
+            this.setState({similarities: similarities})
+        }
+        else {
+            this.setState({showAlert: true})
+        }
+    }
+
+    showAlert() {
+        return (
+            <AlertMassage message={"Word must be at least two characters long"}
+                          severity={"warning"}
+                          show={this.state.showAlert}
+                          showAlert={this.showAlertCallback} />
+        )
     }
 
     componentDidMount() {
@@ -134,7 +166,7 @@ class CategorizedWordsComponent extends Component {
                                                 <th scope="row">{index}</th>
                                                 <td>{this.state.edit[data.tableName][index] ?
                                                     <input type="text"
-                                                           className="form-control"
+                                                           className="fit-field form-control"
                                                            defaultValue={value}
                                                            onChange={this.handleUpdatedWordChange}/> : value}
                                                 </td>
@@ -177,6 +209,7 @@ class CategorizedWordsComponent extends Component {
                             </div>
                         )
                     })}
+                    {this.state.showAlert ? this.showAlert(this.state.message) : null}
                 </div>
             )
         }

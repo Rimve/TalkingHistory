@@ -197,6 +197,8 @@ class DialogueActivity : AppCompatActivity() {
             if (checkIfEnd()) {
                 Log.e(LOG_TAG, "stopped recognition")
                 stopActivity()
+                val intent = Intent(this@DialogueActivity, SelectorActivity::class.java)
+                startActivity(intent)
             }
         }
     }

@@ -26,3 +26,11 @@
     text-decoration: none;
     color: unset;
 }
+
+.fit-field {
+    height: 30px !important;
+}
+
+.uncatgorized-text {
+    width: 310px;
+}
